@@ -29,7 +29,7 @@ const LoginForm: React.FC = () => {
             const newAttempts = attempts + 1;
             setAttempts(newAttempts);
             setError(
-                newAttempts >= 3
+                newAttempts >= 5
                     ? "Account locked due to too many attempts"
                     : err.response?.data?.detail || "Login failed"
             );

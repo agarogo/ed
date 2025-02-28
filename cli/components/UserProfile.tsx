@@ -3,6 +3,7 @@ import api from "../lib/api";
 import { User, UserRole, UserUpdate } from "../lib/types";
 import { useRouter } from "next/router";
 import { logout } from "../lib/auth";
+import { parseCookies } from "nookies";
 
 interface UserProfileProps {
     userId: string;
@@ -19,27 +20,38 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
     useEffect(() => {
         const fetchUser = async () => {
             try {
+                const token = parseCookies()._token;
                 let endpoint: string;
-                if (userId === "me") {  
+                if (userId === "me") {
                     endpoint = "/users/me";
                 } else {
-                    // Теперь обычный пользователь может просматривать профили других пользователей
                     endpoint = `/users/${userId}`;
+                    // Проверяем, что текущий пользователь — админ, если просматривает профиль другого
+                    if (currentUser.role !== UserRole.ADMIN) {
+                        throw new Error("Access denied: Only admins can view other profiles");
+                    }
                 }
                 console.log("Fetching user from:", endpoint);
-                const response = await api.get<User>(endpoint);
+                const response = await api.get<User>(endpoint, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
                 console.log("User fetched:", response.data);
                 setUser(response.data);
                 setFormData({
                     full_name: response.data.full_name,
-                    phone_number: response.data.phone_number,
+                    birthday: response.data.birthday,
+                    sex: response.data.sex,
+                    email_user: response.data.email_user || undefined,
+                    phone_number: response.data.phone_number || undefined,
+                    tg_name: response.data.tg_name,
+                    position_employee: response.data.position_employee,
+                    subdivision: response.data.subdivision,
                     role: response.data.role,
                 });
             } catch (err: any) {
-                console.error("Failed to fetch user:", err.message);
-                if (err.response) {
-                    console.error("Response status:", err.response.status);
-                    console.error("Response data:", err.response.data);
+                console.error("Failed to fetch user:", err.response?.data || err.message);
+                if (err.response?.status === 403 || err.response?.status === 404) {
+                    router.push("/dashboard"); // Перенаправляем на дашборд при ошибке доступа
                 }
             } finally {
                 setLoading(false);
@@ -51,12 +63,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const token = parseCookies()._token;
             const endpoint = userId === "me" ? "/users/me" : `/users/${userId}`;
-            const response = await api.put<User>(endpoint, formData);
+            const response = await api.put<User>(endpoint, formData, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             setUser(response.data);
             setEditMode(false);
-        } catch (err) {
-            console.error("Update failed:", err);
+        } catch (err: any) {
+            console.error("Update failed:", err.response?.data || err.message);
+            setError(err.response?.data?.detail || "Не удалось обновить профиль");
         }
     };
 
@@ -69,7 +85,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
     if (!user) return <p>User not found</p>;
 
     return (
-        <div className="container mx-auto mt-24">
+        <div className="container2 mx-auto mt-24">
             <h1 className="text-2xl font-bold mb-4">{user.full_name}'s Profile</h1>
             {editMode ? (
                 <form onSubmit={handleUpdate} className="space-y-4">
@@ -83,15 +99,72 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
                         />
                     </div>
                     <div>
+                        <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                        <input
+                            type="date"
+                            value={formData.birthday || ""}
+                            onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
+                            className="p-2 border rounded w-full"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Gender</label>
+                        <select
+                            value={formData.sex || ""}
+                            onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
+                            className="p-2 border rounded w-full"
+                        >
+                            <option value="">Select Gender</option>
+                            <option value="М">Мужской</option>
+                            <option value="Ж">Женский</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Personal Email</label>
+                        <input
+                            type="email"
+                            value={formData.email_user || ""}
+                            onChange={(e) => setFormData({ ...formData, email_user: e.target.value || null })}
+                            className="p-2 border rounded w-full"
+                        />
+                    </div>
+                    <div>
                         <label className="block text-sm font-medium mb-1">Phone Number</label>
                         <input
                             type="text"
                             value={formData.phone_number || ""}
-                            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value || null })}
                             className="p-2 border rounded w-full"
                         />
                     </div>
-                    {(currentUser.role === "admin" || userId === "me") && ( // Редактирование доступно для админа или в своём профиле
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Telegram</label>
+                        <input
+                            type="text"
+                            value={formData.tg_name || ""}
+                            onChange={(e) => setFormData({ ...formData, tg_name: e.target.value })}
+                            className="p-2 border rounded w-full"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Position</label>
+                        <input
+                            type="text"
+                            value={formData.position_employee || ""}
+                            onChange={(e) => setFormData({ ...formData, position_employee: e.target.value })}
+                            className="p-2 border rounded w-full"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Subdivision</label>
+                        <input
+                            type="text"
+                            value={formData.subdivision || ""}
+                            onChange={(e) => setFormData({ ...formData, subdivision: e.target.value })}
+                            className="p-2 border rounded w-full"
+                        />
+                    </div>
+                    {currentUser.role === UserRole.ADMIN && (
                         <div>
                             <label className="block text-sm font-medium mb-1">Role</label>
                             <select
@@ -99,9 +172,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
                                 onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
                                 className="p-2 border rounded w-full"
                             >
-                                <option value="admin">Admin</option>
-                                <option value="manager">Manager</option>
-                                <option value="user">User</option>
+                                <option value={UserRole.ADMIN}>Admin</option>
+                                <option value={UserRole.MANAGER}>Manager</option>
+                                <option value={UserRole.USER}>User</option>
                             </select>
                         </div>
                     )}
@@ -120,19 +193,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
                 </form>
             ) : (
                 <div className="space-y-2">
-                    <p><strong>Email:</strong> {user.email}</p>
-                    <p><strong>Phone:</strong> {user.phone_number || "N/A"}</p>
-                    <p><strong>Role:</strong> {user.role}</p>
+                    <p><strong>Email (корпоративный):</strong> {user.email_corporate}</p>
+                    <p><strong>Личный Email:</strong> {user.email_user || "N/A"}</p>
+                    <p><strong>Телефон:</strong> {user.phone_number || "N/A"}</p>
+                    <p><strong>Telegram:</strong> {user.tg_name}</p>
+                    <p><strong>Должность:</strong> {user.position_employee}</p>
+                    <p><strong>Подразделение:</strong> {user.subdivision}</p>
+                    <p><strong>Пол:</strong> {user.sex}</p>
+                    <p><strong>Роль:</strong> {user.role}</p>
                     <div className="space-x-2">
-                        {(currentUser.role === "admin" || (userId === "me" && currentUser.id === user.id)) && ( // Кнопка "Edit" для админа или в своём профиле
+                        {currentUser.role === UserRole.ADMIN && (
                             <button
                                 onClick={() => setEditMode(true)}
-                                className="bg-blue-500 text-white p-2 w-14 rounded-xl hover:bg-blue-600"
+                                className="bg-blue-500 text-white p-2 w-20 rounded-xl hover:bg-blue-600"
                             >
-                                Edit
+                                Редактировать
                             </button>
                         )}
-                        {userId === "me" && currentUser.id === user.id && ( // Кнопка "Выйти" только в своём профиле
+                        {userId === "me" && currentUser.id === user.id && (
                             <button
                                 onClick={handleLogout}
                                 className="bg-red-600 hover:bg-red-700 p-2 rounded-xl"

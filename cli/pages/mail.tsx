@@ -125,9 +125,36 @@ export default function CreateEmployee({ currentUser }: CreateEmployeeProps) {
                         <input
                             type="text"
                             value={user.phone_number}
-                            onChange={(e) => setUser({ ...user, phone_number: e.target.value })}
+                            onChange={(e) => {
+                            // Получаем введенное значение
+                            let value = e.target.value;
+                            
+                            // Удаляем все нецифровые символы, кроме '+'
+                            value = value.replace(/[^+\d]/g, '');
+                            
+                            // Если строка не начинается с '+7', добавляем '+7'
+                            if (!value.startsWith('+7')) {
+                                value = '+7';
+                            }
+                            
+                            // Оставляем только '+7' и следующие 10 цифр
+                            if (value.length > 12) {
+                                value = value.substring(0, 12); // Ограничиваем до 12 символов (+7 + 10 цифр)
+                            }
+                            
+                            // Проверяем, что после '+7' ровно 10 цифр
+                            if (value.startsWith('+7') && value.length > 2) {
+                                const digits = value.slice(2); // Берем цифры после '+7'
+                                if (digits.length > 10) {
+                                value = '+7' + digits.substring(0, 10); // Ограничиваем до 10 цифр
+                                }
+                            }
+                            
+                            // Обновляем состояние
+                            setUser({ ...user, phone_number: value });
+                            }}
                             className="p-2 border rounded-lg w-full"
-                            placeholder="123-456-789"
+                            placeholder="+7(999)-888-88-88"
                             disabled={loading}
                         />
                     </div>
@@ -136,9 +163,36 @@ export default function CreateEmployee({ currentUser }: CreateEmployeeProps) {
                         <input
                             type="text"
                             value={user.tg_name}
-                            onChange={(e) => setUser({ ...user, tg_name: e.target.value })}
+                            onChange={(e) => {
+                            // Получаем введенное значение
+                            let value = e.target.value;
+                            
+                            // Удаляем все пробелы и специальные символы, оставляем только буквы, цифры, подчеркивания и дефисы
+                            value = value.replace(/[^a-zA-Z0-9_@-]/g, '');
+                            
+                            // Если строка не начинается с '@', добавляем '@'
+                            if (!value.startsWith('@')) {
+                                value = '@';
+                            }
+                            
+                            // Ограничиваем длину до 100 символов (включая '@')
+                            if (value.length > 100) {
+                                value = value.substring(0, 100);
+                            }
+                            
+                            // Удаляем '@' из остальной части, если оно введено повторно
+                            if (value.length > 1) {
+                                const afterAt = value.slice(1); // Берем все после '@'
+                                if (afterAt.includes('@')) {
+                                value = '@' + afterAt.replace('@', ''); // Удаляем лишние '@'
+                                }
+                            }
+                            
+                            // Обновляем состояние
+                            setUser({ ...user, tg_name: value });
+                            }}
                             className="p-2 border rounded-lg w-full"
-                            placeholder="ivan_tg"
+                            placeholder="@ivan_tg"
                             disabled={loading}
                         />
                     </div>
@@ -147,7 +201,21 @@ export default function CreateEmployee({ currentUser }: CreateEmployeeProps) {
                         <input
                             type="text"
                             value={user.position_employee}
-                            onChange={(e) => setUser({ ...user, position_employee: e.target.value })}
+                            onChange={(e) => {
+                            // Получаем введенное значение
+                            let value = e.target.value;
+                            
+                            // Удаляем все специальные символы, оставляем только буквы, цифры, пробелы, дефисы и подчеркивания
+                            value = value.replace(/[^a-zA-Z0-9\s_-]/g, '');
+                            
+                            // Ограничиваем длину до 100 символов
+                            if (value.length > 100) {
+                                value = value.substring(0, 100);
+                            }
+                            
+                            // Обновляем состояние
+                            setUser({ ...user, position_employee: value });
+                            }}
                             className="p-2 border rounded-lg w-full"
                             placeholder="Разработчик"
                             disabled={loading}

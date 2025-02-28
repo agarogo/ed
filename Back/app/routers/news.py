@@ -13,10 +13,6 @@ router = APIRouter(prefix="/news", tags=["news"])
 """GET"""
 @router.get("/", response_model=List[NewsInDB])
 def read_news(skip: int = 0, limit: int = 10, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """
-    Получает список новостей, отсортированных по дате создания (новые сверху).
-    Доступно всем авторизованным пользователям.
-    """
     news = get_news(db, skip, limit)
     return news
 

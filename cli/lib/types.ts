@@ -18,3 +18,15 @@ export interface UserUpdate {
     phone_number?: string;
     role?: UserRole;
 }
+export interface News {
+    id: number;
+    title: string;
+    content: string;
+    created_by: number;
+    is_active: boolean;
+    created_at: string;
+}
+export interface NewsCreate {
+    title: string;
+    content: string;
+}
