@@ -73,38 +73,38 @@ export default function Welcome({ currentUser }: WelcomeProps) {
     return (
         <div className="container2 bg-[#] mx-auto mt-24">
             <h1 className="text-5xl font-bold">Новости</h1>
-            <div className="h-[40vh] w-[65%] diagonal-gradient ml-auto rounded-[40] flex">
+            <div className="h-[40vh] mt-[-30] w-[65%] diagonal-gradient ml-auto rounded-[40] flex">
                 <div className="h-[80%] my-auto mx-auto w-[90%] flex">
                     <div className="h-[95%] w-[49%]  my-auto">
                         <div className="h-[100%] w-[70%] fi6 my-auto"></div>
                     </div>
                     <div className="h-full w-[51%]">
-                        <p className="text-white text-5xl font-bold">One Task Of The Month</p>
-                        <div className="h-[30%] w-full rounded-3xl bg-white mt-[30%] flex">
+                        <p className="text-white text-3xl font-bold">One Task Of The Month</p>
+                        <div className="h-[35%] w-full rounded-3xl bg-white mt-[30%] flex">
                             <div className=" text-center text-black my-auto mx-auto"> {/* Changed text color to match the blue theme */}
-                                <h2 className="text-2xl font-bold">Countdown to March 2, 2025</h2>
+                                <h2 className="text-xl font-bold">Countdown to March 2, 2025</h2>
                                 <div className="flex space-x-4 text-lg ">
-                                    <div className="flex space-x-4 mt-4 text-2lg mx-auto">
+                                    <div className="flex space-x-4 mt-4 text-lg mx-auto">
                                         <div className="">
-                                            <span className="block text-3xl font-bold">
+                                            <span className="block text-2xl font-bold">
                                                 {timeLeft?.days ?? 0}
                                             </span>
                                             <span>Days</span>
                                         </div>
                                         <div className="">
-                                            <span className="block text-3xl font-bold">
+                                            <span className="block text-2xl font-bold">
                                                 {timeLeft?.hours ?? 0}
                                             </span>
                                             <span>Hours</span>
                                         </div>
                                         <div className="">
-                                            <span className="block text-3xl font-bold">
+                                            <span className="block text-2xl font-bold">
                                                 {timeLeft?.minutes ?? 0}
                                             </span>
                                             <span>Minutes</span>
                                         </div>
                                         <div className="mr-auto">
-                                            <span className="block text-3xl font-bold">
+                                            <span className="block text-2xl font-bold">
                                                 {timeLeft?.seconds ?? 0}
                                             </span>
                                             <span>Seconds</span>
@@ -127,15 +127,15 @@ export default function Welcome({ currentUser }: WelcomeProps) {
             <div className="h-[30vh] w-full bg-white mt-[5%] shadow-md rounded-[40] flex">
                 <div className="h-[90%] my-auto mx-auto w-[95%] flex">
                     <div className="h-full w-[50%] ">
-                        <p className="text-5xl mt-5 font-bold">Документы</p>
-                        <p className="text-2xl mt-1 font-medium">Бланк письма</p>
+                        <p className="text-3xl mt-5 font-bold">Документы</p>
+                        <p className="text-xl mt-1 font-medium">Бланк письма</p>
 
-                        <p className="text-2xl mt-1 font-medium">Заявление на отпуск</p>
+                        <p className="text-xl mt-1 font-medium">Заявление на отпуск</p>
 
-                        <p className="text-2xl mt-1 font-medium">Заявление на увольнение</p>
+                        <p className="text-xl mt-1 font-medium">Заявление на увольнение</p>
 
-                        <p className="text-2xl mt-1 font-medium">С3 на выдачу средств под отчёт</p>
-                        <button onClick={handleDockClick} className="h-20 mt-10 w-[60%] bg-[#3314F1] rounded-[20] text-white text-2xl">Пройти</button>
+                        <p className="text-xl mt-1 font-medium">С3 на выдачу средств под отчёт</p>
+                        <button onClick={handleDockClick} className="h-[20%] mt-5 w-[60%] bg-[#3314F1] rounded-[20] text-white text-2xl">Пройти</button>
                     </div>
                     <div className="h-full w-[31%] mx-auto fi7"></div>
                 </div>

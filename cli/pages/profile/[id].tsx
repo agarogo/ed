@@ -8,14 +8,16 @@ import { isAuthenticated } from "../../lib/auth";
 interface ProfileProps {
     currentUser: User;
     userId: string;
+    profileUser?: User; // Данные профиля пользователя, если это не текущий пользователь
 }
 
-export default function Profile({ currentUser, userId }: ProfileProps) {
-    return <UserProfile currentUser={currentUser} userId={userId} />;
+export default function Profile({ currentUser, userId, profileUser }: ProfileProps) {
+    return <UserProfile currentUser={currentUser} userId={userId} profileUser={profileUser} />;
 }
 
 export const getServerSideProps: GetServerSideProps<ProfileProps> = async (context) => {
     if (!isAuthenticated(context)) {
+        console.log("User not authenticated, redirecting to /");
         return {
             redirect: { destination: "/", permanent: false },
         };
@@ -25,25 +27,50 @@ export const getServerSideProps: GetServerSideProps<ProfileProps> = async (conte
     const { id } = context.params as { id: string };
 
     try {
-        const response = await api.get<User>("/users/me", {
+        // Получаем текущего пользователя
+        const currentUserResponse = await api.get<User>("/users/me", {
             headers: { Authorization: `Bearer ${_token}` },
         });
+        const currentUser = currentUserResponse.data;
+
+        console.log("Current user:", currentUser);
+        console.log("Requested userId:", id);
 
         // Если это не админ, разрешаем только доступ к своему профилю
-        if (response.data.role !== "admin" && id !== "me") {
+        if (currentUser.role !== "admin" && id !== "me") {
+            console.log("Non-admin user, redirecting to /profile/me");
             return {
                 redirect: { destination: "/profile/me", permanent: false },
             };
         }
 
-        // Если это другой пользователь и не админ, перенаправляем на свой профиль
-        if (id !== "me" && response.data.role !== "admin") {
-            return {
-                redirect: { destination: "/profile/me", permanent: false },
-            };
+        // Если запрашивается профиль другого пользователя (и пользователь — админ)
+        let profileUser: User | undefined = undefined;
+        if (id !== "me" && currentUser.role === "admin") {
+            try {
+                const profileResponse = await api.get<User>(`/users/${id}`, {
+                    headers: { Authorization: `Bearer ${_token}` },
+                });
+                profileUser = profileResponse.data;
+            } catch (err: any) {
+                if (err.response?.status === 404) {
+                    console.error("User not found for id:", id);
+                    return {
+                        notFound: true, // Next.js вернет 404 страницу
+                    };
+                }
+                throw err; // Пробрасываем другие ошибки
+            }
         }
 
-        return { props: { currentUser: response.data, userId: id } };
+        // Для /profile/me или если это админ, возвращаем данные
+        return {
+            props: {
+                currentUser,
+                userId: id,
+                profileUser, // Передаем данные профиля, если загружены
+            },
+        };
     } catch (error) {
         console.error("Error fetching user for profile:", error);
         return {

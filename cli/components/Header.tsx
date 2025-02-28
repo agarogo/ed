@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { User } from "../lib/types";
+import { User, UserRole } from "../lib/types";
 import { logout } from "../lib/auth";
 import { useState } from "react"; // Import useState for modal state
 
@@ -98,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
             {/* Modal Overlay and Content */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
-                    <div className="bg-white p-20 rounded-[40] shadow-lg w-[50%]  relative h-[60vh]" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={closeModal}
                             className="absolute top-2 right-16 mt-16 text-black hover:text-gray-700 text-2xl font-bold"
@@ -107,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
                         </button>
                         <h2 className="text-3xl font-bold mb-4">Профиль</h2>
                         <div className="h-[40%] w-[80%] mx-auto p-10 flex">
-                            <div className="h-[100%] w-2/3 "></div>
+                            <div className="h-[100%] w-2/3"></div>
                             <div className="h-full w-1/3 flex">
                                 <button
                                     onClick={handleLogout}
@@ -116,7 +116,6 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
                                     Выйти
                                 </button>
                             </div>
-
                         </div>
                         <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
                             <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
@@ -128,34 +127,29 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
                                 <p className="text-xl">{currentUser.phone_number || "N/A"}</p>
 
                                 <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
-                                <p className="text-xl">{currentUser.full_name}</p>
+                                <p className="text-xl">{currentUser.tg_name || "N/A"}</p>
                             </div>
                             <div className="h-full w-1/3">
-                                <p className="text-gray-400 text-xl">Фамилия:</p>
-                                <p className="text-xl">{currentUser.full_name}</p>
+                                <p className="text-gray-400 text-xl">Email (личный):</p>
+                                <p className="text-xl">{currentUser.email_user || "N/A"}</p>
 
-                                <p className="text-gray-400 text-xl mt-5">Email:</p>
-                                <p className="text-xl">{currentUser.email}</p>
+                                <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                <p className="text-xl">{currentUser.subdivision || "N/A"}</p>
 
-                                <p className="text-gray-400 text-xl mt-10">Подразделение:</p>
-                                <p className="text-xl">{currentUser.full_name}</p>
+                                <p className="text-gray-400 text-xl mt-10">Пол:</p>
+                                <p className="text-xl">{currentUser.sex || "N/A"}</p>
                             </div>
                             <div className="h-full w-1/3">
-                                <p className="text-gray-400 text-xl">Отчество:</p>
-                                <p className="text-xl">{currentUser.full_name}</p>
+                                <p className="text-gray-400 text-xl">Корп. Email:</p>
+                                <p className="text-xl">{currentUser.email_corporate || "N/A"}</p>
 
-                                <p className="text-gray-400 text-xl mt-5">Корп. Email:</p>
-                                <p className="text-xl">{currentUser.full_name}</p>
+                                <p className="text-gray-400 text-xl mt-5">Должность:</p>
+                                <p className="text-xl">{currentUser.position_employee || "N/A"}</p>
 
-                                <p className="text-gray-400 text-xl mt-10">Должность:</p>
+                                <p className="text-gray-400 text-xl mt-10">Роль:</p>
                                 <p className="text-xl">{currentUser.role}</p>
                             </div>
-
-
-
-
                         </div>
-
                     </div>
                 </div>
             )}

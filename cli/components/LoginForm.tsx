@@ -86,12 +86,12 @@ const LoginForm: React.FC = () => {
 
             <div className="w-[49%] mr-auto h-[96%] rounded-3xl diagonal-gradient">
                 <div className=" inset-0 overflow-hidden">
-                    <div className="absolute w-[593.96px] h-[429.67px] ml-[5%] fi4 rounded-full animate-breathe-up-down delay-4"></div>
+                    <div className="absolute w-[393.96px] h-[309.67px] ml-[7%] mt-[3%] fi4 rounded-full animate-breathe-up-down delay-4"></div>
                     {/* Div 4 - Diagonal Breathing (up-left/down-right) */}
-                    <div className="absolute w-[518px] h-[385.38px] mt-[30%] fi2 rounded-full animate-breathe-diagonal-ul-dr delay-6"></div>
+                    <div className="absolute w-[318px] h-[235.38px] mt-[30%] ml-[2%] fi2 rounded-full animate-breathe-diagonal-ul-dr delay-6"></div>
                     {/* Div 1 - Up/Down Breathing */}
-                    <div className="absolute w-[648.6px] h-[500px] ml-[22%] mt-[20%] fi rounded-full animate-breathe-diagonal-ur-dl delay-1"></div>
-                    <div className="absolute w-[1200.53px] h-[1300.69px]  fi3 rounded-full animate-breathe-up-down delay-2"></div>
+                    <div className="absolute w-[448.6px] h-[350px] ml-[25%] mt-[20%] fi rounded-full animate-breathe-diagonal-ur-dl delay-1"></div>
+                    <div className="absolute w-[1000.53px] h-[900.69px] ml-[-100]  fi3 rounded-full animate-breathe-up-down delay-2"></div>
                     {/* Div 2 - Diagonal Breathing (up-right/down-left) */}
 
                     {/* Div 3 - Up/Down Breathing */}

@@ -20,7 +20,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
         const fetchUser = async () => {
             try {
                 let endpoint: string;
-                if (userId === "me") {
+                if (userId === "me") {  
                     endpoint = "/users/me";
                 } else {
                     // Теперь обычный пользователь может просматривать профили других пользователей

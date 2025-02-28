@@ -112,7 +112,7 @@ body {
   }
 
   50% {
-    transform: translate(40px, -40px);
+    transform: translate(30px, -40px);
   }
 
   100% {
@@ -169,6 +169,18 @@ body {
     max-width: 1800px;
   }
 }
+
+
+
+
+@media (width >=900px) {
+  .container2 {
+    max-width: 1300px;
+  }
+}
+
+
+
 
 /* Modal styles */
 .modal-overlay {

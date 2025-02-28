@@ -1,8 +1,8 @@
 from celery import Celery
-import os
 from dotenv import load_dotenv
-import random
-import string
+from app.schemas import UserCreate
+from transliterate import translit
+import os
 
 load_dotenv()
 
@@ -13,7 +13,13 @@ celery = Celery(
 )
 
 @celery.task
-def generate_random_email():
-    """Генерирует случайную почту в формате userXXXX@example.com."""
-    random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    return f"user{random_str}@example.com"
+def generate_email_for_employee(user_data: dict):
+    user = UserCreate(**user_data)
+    # Разделяем full_name на части (предполагаем "Фамилия Имя Отчество")
+    name_parts = user.full_name.split()
+    if len(name_parts) >= 2:
+        first_initial = str(translit(name_parts[1][0], 'ru', reversed=True)).upper()  # Первая буква имени
+        last_name = str(translit(name_parts[0], 'ru', reversed=True)).lower()  # Фамилия
+        mail_name = f"{first_initial}.{last_name}"
+        return f"{mail_name}@cyber-ed.ru"
+    return f"{str(translit(user.full_name, 'ru', reversed=True)).lower()}@cyber-ed.ru"  # Фallback
