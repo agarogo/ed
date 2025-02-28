@@ -2,19 +2,20 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from enum import Enum
 from datetime import datetime, date
+"""СТРУКТУРЫ ДАННЫХ"""
 
-
-"""USER"""
 class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"
     USER = "user"
 
+"""КЛАССЫ USER"""
 class UserBase(BaseModel):
     full_name: str
     birthday: date
     sex: str
     email_user: Optional[EmailStr] = None
+    email_corporate: Optional[EmailStr] = None
     phone_number: Optional[str] = None
     tg_name: str
     position_employee: str
@@ -34,18 +35,23 @@ class UserUpdate(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    email_corporate: Optional[EmailStr] = None  # Добавляем для фронта, если нужно
 
 class UserInDB(UserBase):
     id: int
     is_active: bool
     login_attempts: int
     created_at: datetime
-    email_corporate: EmailStr  # Убедимся, что поле есть
 
     class Config:
         orm_mode = True
 
+class TwoFactorRequest(BaseModel):
+    email: str
+    password: str
+
+class TwoFactorVerify(BaseModel):
+    email: str
+    otp: str        
 
 """NEWS"""
 class NewsBase(BaseModel):
@@ -68,7 +74,7 @@ class NewsInDB(NewsBase):
         orm_mode = True
 
 
-"""TOKEN"""
+"""КЛАССЫ TOKENA"""
 class Token(BaseModel):
     access_token: str
     token_type: str

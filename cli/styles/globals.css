@@ -60,6 +60,16 @@ body {
   background-size: cover;
 }
 
+.fi8 {
+  background-image: url(../public/photo.png);
+  background-size: cover;
+}
+
+.fi9 {
+  background-image: url(../public/w22.png);
+  background-size: cover;
+}
+
 .diagonal-gradient {
   background: linear-gradient(-45deg, #8B0C0E, #3314F1);
 }

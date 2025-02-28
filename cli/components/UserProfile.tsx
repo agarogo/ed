@@ -192,17 +192,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
                     </div>
                 </form>
             ) : (
-                <div className="space-y-2">
-                    <p><strong>Email (корпоративный):</strong> {user.email_corporate}</p>
-                    <p><strong>Личный Email:</strong> {user.email_user || "N/A"}</p>
-                    <p><strong>Телефон:</strong> {user.phone_number || "N/A"}</p>
-                    <p><strong>Telegram:</strong> {user.tg_name}</p>
-                    <p><strong>Должность:</strong> {user.position_employee}</p>
-                    <p><strong>Подразделение:</strong> {user.subdivision}</p>
-                    <p><strong>Пол:</strong> {user.sex}</p>
-                    <p><strong>Роль:</strong> {user.role}</p>
-                    <div className="space-x-2">
-                        {currentUser.role === UserRole.ADMIN && (
+
+
+
+
+
+
+
+                <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
+                    {currentUser.role === UserRole.ADMIN && (
                             <button
                                 onClick={() => setEditMode(true)}
                                 className="bg-blue-500 text-white p-2 w-20 rounded-xl hover:bg-blue-600"
@@ -218,6 +216,36 @@ const UserProfile: React.FC<UserProfileProps> = ({ userId, currentUser }) => {
                                 Выйти
                             </button>
                         )}
+                    <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
+                    <div className="h-full w-1/3">
+                        <p className="text-gray-400 text-xl">Имя:</p>
+                        <p className="text-xl">{currentUser.full_name}</p>
+
+                        <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                        <p className="text-xl">{currentUser.phone_number || "N/A"}</p>
+
+                        <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
+                        <p className="text-xl">{currentUser.tg_name || "N/A"}</p>
+                    </div>
+                    <div className="h-full w-1/3">
+                        <p className="text-gray-400 text-xl">Email (личный):</p>
+                        <p className="text-xl">{currentUser.email_user || "N/A"}</p>
+
+                        <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                        <p className="text-xl">{currentUser.subdivision || "N/A"}</p>
+
+                        <p className="text-gray-400 text-xl mt-10">Пол:</p>
+                        <p className="text-xl">{currentUser.sex || "N/A"}</p>
+                    </div>
+                    <div className="h-full w-1/3">
+                        <p className="text-gray-400 text-xl">Корп. Email:</p>
+                        <p className="text-xl">{currentUser.email_corporate || "N/A"}</p>
+
+                        <p className="text-gray-400 text-xl mt-5">Должность:</p>
+                        <p className="text-xl">{currentUser.position_employee || "N/A"}</p>
+
+                        <p className="text-gray-400 text-xl mt-10">Роль:</p>
+                        <p className="text-xl">{currentUser.role}</p>
                     </div>
                 </div>
             )}

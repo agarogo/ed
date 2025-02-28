@@ -178,16 +178,16 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
                                             key={user.id}
                                             className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4"
                                         >
-                                            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                                                <span className="text-gray-500">Нет аватара</span>
+                                            <div className="w-20 h-20  rounded-full fi8 flex items-center justify-center overflow-hidden">
+                                                
                                             </div>
                                             <div className="flex-1">
-                                                <Link
-                                                    href={`/profile/${user.id}`}
-                                                    className="text-purple-600 text-lg font-semibold hover:underline"
+                                                <p
+                                                    
+                                                    className="text-purple-600 text-lg font-semibold "
                                                 >
                                                     {user.full_name}
-                                                </Link>
+                                                </p>
                                                 <p className="text-gray-600">{user.position_employee}</p>
                                             </div>
                                             <button
@@ -210,94 +210,180 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
                     <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
                         <h2 className="text-2xl font-bold mb-4">Профиль пользователя</h2>
                         {editMode ? (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Имя</label>
-                                    <input
-                                        type="text"
-                                        value={selectedUser.full_name}
-                                        onChange={(e) =>
-                                            setSelectedUser({ ...selectedUser, full_name: e.target.value })
-                                        }
-                                        className="p-2 border rounded-lg w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email (личный)</label>
-                                    <input
-                                        type="email"
-                                        value={selectedUser.email_user || ""}
-                                        onChange={(e) =>
-                                            setSelectedUser({ ...selectedUser, email_user: e.target.value || null })
-                                        }
-                                        className="p-2 border rounded-lg w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Телефон</label>
-                                    <input
-                                        type="text"
-                                        value={selectedUser.phone_number || ""}
-                                        onChange={(e) =>
-                                            setSelectedUser({ ...selectedUser, phone_number: e.target.value || null })
-                                        }
-                                        className="p-2 border rounded-lg w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Роль</label>
-                                    <select
-                                        value={selectedUser.role}
-                                        onChange={(e) =>
-                                            setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
-                                        }
-                                        className="p-2 border rounded-lg w-full"
-                                    >
-                                        <option value={UserRole.ADMIN}>Admin</option>
-                                        <option value={UserRole.MANAGER}>Manager</option>
-                                        <option value={UserRole.USER}>User</option>
-                                    </select>
-                                </div>
-                                <div className="flex justify-end space-x-4">
-                                    <button
-                                        onClick={() => handleSaveChanges(selectedUser)}
-                                        className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-                                    >
-                                        Сохранить
-                                    </button>
-                                    <button
-                                        onClick={() => setEditMode(false)}
-                                        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-                                    >
-                                        Отмена
-                                    </button>
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                                    <h2 className="text-3xl font-bold mb-4">Профиль</h2>
+                                    <div className="h-[40%] w-[80%] mx-auto p-10 flex">
+                                        <div className="h-[100%] w-2/3">
+                                            <div className="h-40 w-40 my-auto rounded-full fi8"></div>
+                                        </div>
+                                        <div className="h-full w-1/3 flex">
+                                            <button
+                                                onClick={() => handleSaveChanges(selectedUser)}
+                                                className="bg-green-500 mt-auto h-10 text-white px-4 py-2 rounded-full hover:bg-green-600"
+                                            >
+                                                Сохранить
+                                            </button>
+                                            <button
+                                                onClick={() => setEditMode(false)}
+                                                className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-full hover:bg-gray-600"
+                                            >
+                                                Отмена
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
+                                        <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
+                                        <div className="h-full w-1/3">
+                                            <p className="text-gray-400 text-xl">Имя:</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.full_name}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, full_name: e.target.value })
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                            
+                                            <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.phone_number || ""}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, phone_number: e.target.value})
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                            
+                                            <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.tg_name || ""}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, tg_name: e.target.value})
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                                        </div>
+                                        <div className="h-full w-1/3">
+                                            <p className="text-gray-400 text-xl">Email (личный):</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.email_user || ""}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, email_user: e.target.value || null })
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                            
+                                            <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.subdivision || ""}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, subdivision: e.target.value || null })
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                            
+                                        </div>
+                                        <div className="h-full w-1/3">
+                            
+                                            <p className="text-gray-400 text-xl">Должность:</p>
+                                            <input
+                                                type="text"
+                                                value={selectedUser.position_employee || ""}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, position_employee: e.target.value || null })
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            />
+                            
+                                            <p className="text-gray-400 text-xl mt-5">Роль:</p>
+                                            <select
+                                                value={selectedUser.role}
+                                                onChange={(e) =>
+                                                    setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
+                                                }
+                                                className="p-2 border rounded-lg w-full"
+                                            >
+                                                <option value={UserRole.ADMIN}>Admin</option>
+                                                <option value={UserRole.MANAGER}>Manager</option>
+                                                <option value={UserRole.USER}>User</option>
+                                            </select>
+                            
+                            
+                            
+                            
+                                            
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                <p><strong>Имя:</strong> {selectedUser.full_name}</p>
-                                <p><strong>Корп. Email:</strong> {selectedUser.email_corporate}</p>
-                                <p><strong>Личный Email:</strong> {selectedUser.email_user || "N/A"}</p>
-                                <p><strong>Телефон:</strong> {selectedUser.phone_number || "N/A"}</p>
-                                <p><strong>Telegram:</strong> {selectedUser.tg_name}</p>
-                                <p><strong>Должность:</strong> {selectedUser.position_employee}</p>
-                                <p><strong>Подразделение:</strong> {selectedUser.subdivision}</p>
-                                <p><strong>Пол:</strong> {selectedUser.sex}</p>
-                                <p><strong>Роль:</strong> {selectedUser.role}</p>
-                                {currentUser.role === UserRole.ADMIN && (
-                                    <button
-                                        onClick={() => setEditMode(true)}
-                                        className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600"
-                                    >
-                                        Редактировать
-                                    </button>
-                                )}
-                                <button
-                                    onClick={handleCloseModal}
-                                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-                                >
-                                    Закрыть
-                                </button>
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                                <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                                    <h2 className="text-3xl font-bold mb-4">Профиль</h2>
+                                    <div className="h-[40%] w-[80%] mx-auto p-10 flex">
+                                        <div className="h-[100%] w-2/3">
+                                            <div className="h-40 w-40 my-auto rounded-full fi8"></div>
+                                        </div>
+                                        <div className="h-full w-1/3 flex">
+                                            {currentUser.role === UserRole.ADMIN && (
+                                                <button
+                                                    onClick={() => setEditMode(true)}
+                                                    className="bg-purple-500 mt-auto h-10 text-white px-4 py-2 rounded-3xl hover:bg-purple-600"
+                                                >
+                                                    Редактировать
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={handleCloseModal}
+                                                className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-3xl hover:bg-gray-600"
+                                            >
+                                                Закрыть
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
+                                        <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
+                                        <div className="h-full w-1/3">
+                                            <p className="text-gray-400 text-xl">Имя:</p>
+                                            <p className="text-xl">{selectedUser.full_name}</p>
+
+                                            <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                                            <p className="text-xl">{selectedUser.phone_number || "N/A"}</p>
+
+                                            <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
+                                            <p className="text-xl">{selectedUser.tg_name || "N/A"}</p>
+                                        </div>
+                                        <div className="h-full w-1/3">
+                                            <p className="text-gray-400 text-xl">Email (личный):</p>
+                                            <p className="text-xl">{selectedUser.email_user || "N/A"}</p>
+
+                                            <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                            <p className="text-xl">{selectedUser.subdivision || "N/A"}</p>
+
+                                            <p className="text-gray-400 text-xl mt-10">Пол:</p>
+                                            <p className="text-xl">{selectedUser.sex || "N/A"}</p>
+                                        </div>
+                                        <div className="h-full w-1/3">
+                                            <p className="text-gray-400 text-xl">Корп. Email:</p>
+                                            <p className="text-xl">{selectedUser.email_corporate || "N/A"}</p>
+
+                                            <p className="text-gray-400 text-xl mt-5">Должность:</p>
+                                            <p className="text-xl">{selectedUser.position_employee || "N/A"}</p>
+
+                                            <p className="text-gray-400 text-xl mt-10">Роль:</p>
+                                            <p className="text-xl">{selectedUser.role}</p>
+
+
+
+
+                                            
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                         {error && <p className="text-red-500 mt-4">{error}</p>}

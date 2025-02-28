@@ -7,6 +7,7 @@ from app.crud import create_news, get_news, get_news_by_id
 from app.database import get_db
 from app.dependencies import get_current_user, get_admin_user
 from app.models import News, User, UserRole
+from app.logging_config import logger
 
 router = APIRouter(prefix="/news", tags=["news"])
 
@@ -18,10 +19,6 @@ def read_news(skip: int = 0, limit: int = 10, db: Session = Depends(get_db), cur
 
 @router.get("/{news_id}", response_model=NewsInDB)
 def read_news_by_id(news_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """
-    Получает конкретную новость по ID.
-    Доступно всем авторизованным пользователям.
-    """
     news = get_news_by_id(db, news_id)
     if not news or not news.is_active:
         raise HTTPException(status_code=404, detail="News not found")
@@ -30,10 +27,7 @@ def read_news_by_id(news_id: int, db: Session = Depends(get_db), current_user: U
 """POST"""
 @router.post("/", response_model=NewsInDB)
 def create_news_endpoint(news: NewsCreate, db: Session = Depends(get_db), current_user: User = Depends(get_admin_user)):
-    """
-    Создает новую новость.
-    Доступно только администраторам.
-    """
+    logger.info(f"Admin {current_user.email_corporate} creating news with title: {news.title}")
     return create_news(db, news, current_user.id)
 
 """PUT/PATCH"""
@@ -44,17 +38,12 @@ def update_news(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user)
 ):
-    """
-    Обновляет существующую новость.
-    Доступно только администраторам.
-    """
     db_news = get_news_by_id(db, news_id)
     if not db_news:
         raise HTTPException(status_code=404, detail="News not found")
     if db_news.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="You can only update your own news")
     
-    # Обновляем только те поля, которые указаны
     if news_update.title is not None:
         db_news.title = news_update.title
     if news_update.content is not None:
@@ -73,10 +62,6 @@ def delete_news(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user)
 ):
-    """
-    Удаляет новость (устанавливает is_active = False).
-    Доступно только администраторам.
-    """
     db_news = get_news_by_id(db, news_id)
     if not db_news:
         raise HTTPException(status_code=404, detail="News not found")

@@ -1,82 +1,95 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import or_, and_
-from app.schemas import UserCreate, UserUpdate, NewsCreate, NewsUpdate
-from passlib.context import CryptContext
-from app.models import User, Notification, News, UserRole
+from passlib.context import CryptContext 
 from fastapi import HTTPException
-import os
 from dotenv import load_dotenv
 from app.tasks import generate_email_for_employee
+from app.logging_config import logger
+from app.schemas import UserCreate, UserUpdate, NewsCreate, NewsUpdate
+from app.models import User, Notification, News, UserRole
+import os
+"""ФУНКЦИИ"""
 
 load_dotenv()
 
+SPECIAL_CHARS = '!@#$%^&*()_-+=№;%:?*'
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 """USER"""
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email_corporate == email).first()
 
-def password_check(user: UserCreate):
-    checker = False
-    if len(user.password) >= 8 and len(user.password) <= 40:
-        n = user.full_name.split()[0]
-        n1 = user.full_name.split()[1]
-        if n not in user.password and n1 not in user.password:
-            for i in range(len(user.password)):
-                if user.password[i] in '!@#$%^&*()_-+=№;%:?*':
-                    checker1 = False
-                    k1 = 0
-                    k2 = 0
-                    for i in range(len(user.password)):
-                        if user.password[i].isupper():
-                            k1 += 1
-                        if user.password[i].islower():
-                            k2 += 1
-                    if k1 + k2 > 2:
-                        checker1 = True
-                    if checker1:
-                        checker2 = True
-                        with open('top_passwords.txt') as f_open:
-                            data = f_open.read()
-                            if data in user.password:
-                                checker2 = False
-                        if checker2:
-                            checker = True
-    return checker
-
-def create_user(db: Session, user: UserCreate):
-    hashed_password = pwd_context.hash(user.password)
-    email_corporate = user.email_corporate or generate_email_for_employee(user.dict())
-    db_user_existing = get_user_by_email(db, email_corporate)
-    if db_user_existing:
-        raise HTTPException(status_code=400, detail="Email corporate already registered")
-
-    db_user = User(
-        birthday=user.birthday,
-        sex=user.sex,
-        tg_name=user.tg_name,
-        position_employee=user.position_employee,
-        subdivision=user.subdivision,
-        email_user=user.email_user,
-        email_corporate=email_corporate,
-        hashed_password=hashed_password,
-        full_name=user.full_name,
-        phone_number=user.phone_number,
-        role=user.role,
-        is_active=True,
-        login_attempts=0
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+def get_user(db: Session, user_id: int):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
     return db_user
+
+def password_check(user: UserCreate) -> bool:
+    password = user.password
+    if not (8 <= len(password) <= 40):
+        return False
+    try:
+        name_parts = user.full_name.split()
+        if len(name_parts) < 1:
+            return False  # Пустое имя недопустимо
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else ""
+        if first_name in password or (last_name and last_name in password):
+            return False
+    except IndexError:
+        return False
+    has_special = any(char in SPECIAL_CHARS for char in password)
+    if not has_special:
+        return False
+    upper_count = sum(1 for char in password if char.isupper())
+    lower_count = sum(1 for char in password if char.islower())
+    if upper_count + lower_count <= 2:
+        return False
+    try:
+        with open('top_passwords.txt', 'r') as f:
+            weak_passwords = {line.strip() for line in f}
+        if password in weak_passwords:
+            return False
+    except FileNotFoundError:
+        # Если файл не найден, можно либо вернуть False, либо пропустить эту проверку
+        pass  # Предполагаем, что отсутствие файла не блокирует создание 
+    return True
+
+def create_user(db: Session, user: UserCreate) -> User:
+    logger.info(f"Attempting to create user: {user.full_name}")
+    if password_check(user):
+        hashed_password = pwd_context.hash(user.password)
+        db_user = User(
+            birthday=user.birthday,
+            sex=user.sex,
+            tg_name=user.tg_name,
+            position_employee=user.position_employee,
+            subdivision=user.subdivision,
+            email_user=user.email_user,
+            email_corporate=user.email_corporate,
+            hashed_password=hashed_password,
+            full_name=user.full_name,
+            phone_number=user.phone_number,
+            role=user.role,
+            is_active=True,
+            login_attempts=0
+        )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        logger.info(f"User created successfully: {db_user.email_corporate}, ID: {db_user.id}")
+        return db_user
+    else:
+        logger.warning(f"Failed to create user with email {user.email_corporate}: Weak password")
+        raise HTTPException(status_code=403, detail="Weak password")
 
 def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         return None
     if all(value is None for value in [user_update.full_name, user_update.phone_number, user_update.role]):
-        return db_user
+        return db_user  # Ничего не обновляем, возвращаем как есть
 
     if user_update.full_name is not None:
         db_user.full_name = user_update.full_name
@@ -121,20 +134,19 @@ def search_users(db: Session, full_name: str = None, role: UserRole = None, sex:
         print(f"Search error for filters {locals()}: {str(e)}")
         raise HTTPException(status_code=422, detail=f"Error processing filters: {str(e)}")
 
-def get_user(db: Session, user_id: int):
-    db_user = db.query(User).filter(User.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
 def authenticate_user(db: Session, email: str, password: str):
+    """Аутентифицирует пользователя по email и паролю."""
+    logger.info(f"Authentication attempt for email: {email}")
     user = get_user_by_email(db, email)
     if not user or not user.is_active:
+        logger.warning(f"Authentication failed for {email}: User not found or inactive")
         return False
     if not pwd_context.verify(password, user.hashed_password):
         user.login_attempts += 1
+        logger.warning(f"Authentication failed for {email}: Incorrect password, attempts: {user.login_attempts}")
         if user.login_attempts >= 5:
             user.is_active = False
+            logger.error(f"User {email} blocked due to too many login attempts")
             if not has_block_notification(db, user.id):
                 create_notification(db, user.id, "Ваш аккаунт заблокирован из-за неудачных попыток входа.")
                 if user.role == "admin":
@@ -144,9 +156,11 @@ def authenticate_user(db: Session, email: str, password: str):
                             create_notification(db, admin.id, f"Пользователь {user.email_corporate} заблокирован из-за неудачных попыток входа.")
         db.commit()
         return False
-    user.login_attempts = 0
+    user.login_attempts = 0 
     db.commit()
-    return user
+    logger.info(f"User {email} authenticated successfully")
+    return user 
+    
 
 """УВЕДОМЛЕНИЯ"""
 def create_notification(db: Session, user_id: int, message: str):
@@ -159,6 +173,7 @@ def create_notification(db: Session, user_id: int, message: str):
     return db_notification
 
 def has_block_notification(db: Session, user_id: int):
+    """Проверяет, есть ли уже уведомление о блокировке для пользователя."""
     return db.query(Notification).filter(
         Notification.user_id == user_id,
         Notification.message.like("%заблокирован из-за неудачных попыток входа%")
@@ -166,6 +181,7 @@ def has_block_notification(db: Session, user_id: int):
 
 def get_user_notifications(db: Session, user_id: int):
     return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
+
 
 """NEWS"""
 def create_news(db: Session, news: NewsCreate, user_id: int):

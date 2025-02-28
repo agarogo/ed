@@ -118,32 +118,59 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
             {/* Modal Overlay and Content */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={closeModal}>
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-[60%] max-w-4xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={closeModal}
-                            className="absolute top-2 right-2 text-black hover:text-gray-700 text-2xl font-bold"
+                            className="absolute top-2 right-16 mt-16 text-black hover:text-gray-700 text-2xl font-bold"
                         >
                             ×
                         </button>
                         <h2 className="text-3xl font-bold mb-4">Профиль</h2>
-                        <div className="space-y-4">
-                            <p><strong>Имя:</strong> {currentUser.full_name}</p>
-                            <p><strong>Корп. Email:</strong> {currentUser.email_corporate}</p>
-                            <p><strong>Личный Email:</strong> {currentUser.email_user || "N/A"}</p>
-                            <p><strong>Телефон:</strong> {currentUser.phone_number || "N/A"}</p>
-                            <p><strong>Telegram:</strong> {currentUser.tg_name}</p>
-                            <p><strong>Должность:</strong> {currentUser.position_employee}</p>
-                            <p><strong>Подразделение:</strong> {currentUser.subdivision}</p>
-                            <p><strong>Пол:</strong> {currentUser.sex}</p>
-                            <p><strong>Роль:</strong> {currentUser.role}</p>
+                        <div className="h-[40%] w-[80%] mx-auto p-10 flex">
+                            <div className="h-[100%] w-2/3">
+                                <div className="h-40 w-40 my-auto rounded-full fi8"></div>
+                            </div>
+                            <div className="h-full w-1/3 flex">
+                                <button
+                                    onClick={handleLogout}
+                                    className="rounded-full border-2 h-10 w-20 bg-red-400 text-xl ml-auto mt-auto"
+                                >
+                                    Выйти
+                                </button>
+                            </div>
                         </div>
-                        <div className="mt-4 flex justify-end space-x-4">
-                            <button
-                                onClick={handleLogout}
-                                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                            >
-                                Выйти
-                            </button>
+                        <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
+                            <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
+                            <div className="h-full w-1/3">
+                                <p className="text-gray-400 text-xl">Имя:</p>
+                                <p className="text-xl">{currentUser.full_name}</p>
+
+                                <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                                <p className="text-xl">{currentUser.phone_number || "N/A"}</p>
+
+                                <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
+                                <p className="text-xl">{currentUser.tg_name || "N/A"}</p>
+                            </div>
+                            <div className="h-full w-1/3">
+                                <p className="text-gray-400 text-xl">Email (личный):</p>
+                                <p className="text-xl">{currentUser.email_user || "N/A"}</p>
+
+                                <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                <p className="text-xl">{currentUser.subdivision || "N/A"}</p>
+
+                                <p className="text-gray-400 text-xl mt-10">Пол:</p>
+                                <p className="text-xl">{currentUser.sex || "N/A"}</p>
+                            </div>
+                            <div className="h-full w-1/3">
+                                <p className="text-gray-400 text-xl">Корп. Email:</p>
+                                <p className="text-xl">{currentUser.email_corporate || "N/A"}</p>
+
+                                <p className="text-gray-400 text-xl mt-5">Должность:</p>
+                                <p className="text-xl">{currentUser.position_employee || "N/A"}</p>
+
+                                <p className="text-gray-400 text-xl mt-10">Роль:</p>
+                                <p className="text-xl">{currentUser.role}</p>
+                            </div>
                         </div>
                     </div>
                 </div>

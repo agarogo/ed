@@ -93,49 +93,58 @@ export default function News({ currentUser }: NewsProps) {
     }, []);
 
     return (
-        <div className="min-h-screen">
-            <div className="mt-24 container2 mx-auto">
+        <div className="h-screen">
+            <div className="mt-24 container2 mx-auto">  
                 <p className="text-4xl font-bold p-12 text-center bg-gray-200 rounded-3xl mb-8">
                     Создавайте рассказы, которые <span className="text-[#3314F1]">вдохновляют</span>, дают <span className="text-[#3314F1]">знания</span>, и <span className="text-[#3314F1]">развлечение</span>
                 </p>
-                <div className="h-[80%] my-auto mx-auto w-[100%] flex bg-black">  
-                    <div className="h-full w-[49%] my-auto diagonal-gradient">
-                        <div className="h-[100%] w-[70%] bg-white my-auto"></div>
-                    </div>
-                    <div className="h-full diagonal-gradient w-[51%] rounded-[35] p-6">
-                        <p className="text-white text-3xl font-bold">One Task Of The Month</p>
-                        <div className="h-[35%] w-full rounded-3xl bg-white mt-[30%] flex">
-                            <div className="text-center text-black my-auto mx-auto">
-                                <h2 className="text-xl font-bold">Countdown to March 2, 2025</h2>
-                                <div className="flex space-x-4 text-lg">
-                                    <div className="flex space-x-4 mt-4 text-lg mx-auto">
-                                        <div>
-                                            <span className="block text-2xl font-bold">{timeLeft.days}</span>
-                                            <span>Days</span>
-                                        </div>
-                                        <div>
-                                            <span className="block text-2xl font-bold">{timeLeft.hours}</span>
-                                            <span>Hours</span>
-                                        </div>
-                                        <div>
-                                            <span className="block text-2xl font-bold">{timeLeft.minutes}</span>
-                                            <span>Minutes</span>
-                                        </div>
-                                        <div className="mr-auto">
-                                            <span className="block text-2xl font-bold">{timeLeft.seconds}</span>
-                                            <span>Seconds</span>
+                
+                <div className="h-[40vh] my-auto mx-auto w-[100%] flex">  
+                    <div className="h-[100%] w-[70%] flex diagonal-gradient rounded-[35]">
+                        <div className="h-[80%] my-auto w-[49%] ">
+                            <div className="h-full mx-auto fi6 w-[60%]"></div>
+                        </div>
+                        <div className="h-full  w-[51%]  p-6">
+                            <p className="text-white text-3xl font-bold">One Task Of The Month</p>
+                            <div className="h-[35%] w-full rounded-3xl bg-white mt-[30%] flex">
+                                <div className="text-center text-black my-auto mx-auto">
+                                    <h2 className="text-xl font-bold">Countdown to March 2, 2025</h2>
+                                    <div className="flex space-x-4 text-lg">
+                                        <div className="flex space-x-4 mt-4 text-lg mx-auto">
+                                            <div>
+                                                <span className="block text-2xl font-bold">{timeLeft.days}</span>
+                                                <span>Days</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-2xl font-bold">{timeLeft.hours}</span>
+                                                <span>Hours</span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-2xl font-bold">{timeLeft.minutes}</span>
+                                                <span>Minutes</span>
+                                            </div>
+                                            <div className="mr-auto">
+                                                <span className="block text-2xl font-bold">{timeLeft.seconds}</span>
+                                                <span>Seconds</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <div className="flex">
+                                <p className="text-white text-xl ml-auto mt-5">Подробнее</p>
+                            </div>
                         </div>
-                        <div className="flex">
-                            <p className="text-white text-xl ml-auto mt-5">Подробнее</p>
-                        </div>
+                    </div>
+                    <div className="h-[100%] w-[28%] ml-auto ">
+                        <p className="text-4xl font-bold">Закрытие “<span className="text-[#3314F1]">Моя профессия IT 2025</span>” </p>
+                        <p className="text-xl mt-[50%] font-bold">2 Марта будет проводится закрытие хакатона “Моя профессия IT 2025”</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <p className="text-4xl font-bold mt-24">Последние новости</p>
+                <div className="grid h-[30vh] grid-cols-4 gap-6 mt-5">
+                    
                     {loading ? (
                         <p className="text-center col-span-2">Загрузка...</p>
                     ) : error ? (
@@ -144,11 +153,13 @@ export default function News({ currentUser }: NewsProps) {
                         <p className="text-center col-span-2">Новостей не найдено</p>
                     ) : (
                         news.map((item) => (
+                            
                             <div
                                 key={item.id}
-                                className="bg-red-700 text-white p-4 rounded-2xl shadow-md flex flex-col items-center"
-                            >
-                                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                                className="bg-white p-4 rounded-2xl shadow-md flex flex-col items-center"
+                            >   
+                                <div className="h-[20vh] fi9 w-full rounded-2xl"></div>
+                                <h3 className="text-xl font-bold mb-2 mt-auto">{item.title}</h3>
                                 <p className="text-center mb-2 text-sm line-clamp-3">{item.content}</p>
                                 <p className="text-center mb-2 text-sm">
                                     Добавлено: {new Date(item.created_at).toLocaleDateString()}
@@ -163,6 +174,7 @@ export default function News({ currentUser }: NewsProps) {
                         ))
                     )}
                 </div>
+                <div className="h-[20vh]"></div>
             </div>
         </div>
     );

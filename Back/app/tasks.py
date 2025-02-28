@@ -1,7 +1,8 @@
 from celery import Celery
 from dotenv import load_dotenv
-from app.schemas import UserCreate
 from transliterate import translit
+from app.schemas import UserCreate
+from app.logging_config import logger
 import os
 
 load_dotenv()
@@ -13,13 +14,16 @@ celery = Celery(
 )
 
 @celery.task
-def generate_email_for_employee(user_data: dict):
-    user = UserCreate(**user_data)
-    # Разделяем full_name на части (предполагаем "Фамилия Имя Отчество")
+def generate_email_for_employee(user: UserCreate):
+    logger.info(f"Generating corporate email for user: {user.full_name}")
     name_parts = user.full_name.split()
+    mail_generate = ''
     if len(name_parts) >= 2:
-        first_initial = str(translit(name_parts[1][0], 'ru', reversed=True)).upper()  # Первая буква имени
-        last_name = str(translit(name_parts[0], 'ru', reversed=True)).lower()  # Фамилия
-        mail_name = f"{first_initial}.{last_name}"
-        return f"{mail_name}@cyber-ed.ru"
-    return f"{str(translit(user.full_name, 'ru', reversed=True)).lower()}@cyber-ed.ru"  # Фallback
+        first_initial = str(translit(name_parts[1][0], 'ru', reversed=True)).upper()
+        last_name = str(translit(name_parts[0], 'ru', reversed=True)).lower()
+        mail_generate = f"{first_initial}.{last_name}"
+    else:
+        mail_generate = str(translit(user.full_name, 'ru', reversed=True)).lower()
+    email = f"{mail_generate}@cyber-ed.ru"
+    logger.info(f"Generated email: {email}")
+    return email

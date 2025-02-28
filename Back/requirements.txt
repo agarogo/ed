@@ -19,3 +19,11 @@ pyOpenSSL==25.0.0
 pyyaml==6.0.2 
 watchfiles==1.0.4 
 websockets==15.0
+#eshyo
+# Jinja2==3.1.5 
+# aiosmtplib==3.0.2 
+# blinker==1.9.0 
+# fastapi-mail==1.4.2 
+# pydantic==2.10.6 
+# pydantic-core==2.27.2 
+# pydantic-settings==2.8.1

@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-import os
 from app.schemas import TokenData
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 

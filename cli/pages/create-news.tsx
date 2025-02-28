@@ -13,6 +13,7 @@ export default function CreateNews({ currentUser }: CreateNewsProps) {
     const [news, setNews] = useState<NewsCreate>({
         title: "",
         content: "",
+        newsc: "",  // Добавлено поле для описания
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export default function CreateNews({ currentUser }: CreateNewsProps) {
             setNews({
                 title: "",
                 content: "",
+                newsc: "",  // Сброс поля newsc
             });
         } catch (err: any) {
             console.error("Failed to create news:", err.response?.data || err.message);
@@ -56,10 +58,10 @@ export default function CreateNews({ currentUser }: CreateNewsProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen ">
             <div className="mt-24 container2 mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-8">Создание новости</h1>
-                <form onSubmit={loading ? undefined : handleSubmit} className="max-w-md mx-auto p-6 bg-white rounded-2xl shadow-md">
+                <h1 className="text-4xl font-bold  mb-8">Создание новости</h1>
+                <form onSubmit={loading ? undefined : handleSubmit} className=" mx-auto p-6 bg-white rounded-2xl shadow-md">
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Заголовок *</label>
                         <input
@@ -81,6 +83,16 @@ export default function CreateNews({ currentUser }: CreateNewsProps) {
                             placeholder="Введите содержание новости"
                             disabled={loading}
                             required
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Описание (newsc)</label>
+                        <textarea
+                            value={news.newsc || ""}
+                            onChange={(e) => setNews({ ...news, newsc: e.target.value })}
+                            className="p-2 border rounded-lg w-full h-20 focus:border-purple-500"
+                            placeholder="Введите краткое описание новости"
+                            disabled={loading}
                         />
                     </div>
                     <button
