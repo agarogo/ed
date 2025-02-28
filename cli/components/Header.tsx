@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
 
     const handleMailClick = () => {
         if (currentUser && currentUser.role === "admin") {
-            router.push("/create-employee");
+            router.push("/mail");
         } else {
             console.warn("Only admins can access Create Employee");
         }

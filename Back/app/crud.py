@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql import or_, and_
 from app.schemas import UserCreate, UserUpdate, NewsCreate, NewsUpdate
 from passlib.context import CryptContext
-from app.models import User, Notification, News
+from app.models import User, Notification, News, UserRole
 from fastapi import HTTPException
 import os
 from dotenv import load_dotenv
@@ -45,11 +45,8 @@ def password_check(user: UserCreate):
     return checker
 
 def create_user(db: Session, user: UserCreate):
-    # if password_check(user):
     hashed_password = pwd_context.hash(user.password)
-    # Генерируем email_corporate, если не указан
     email_corporate = user.email_corporate or generate_email_for_employee(user.dict())
-    # Проверяем, существует ли пользователь с таким email_corporate
     db_user_existing = get_user_by_email(db, email_corporate)
     if db_user_existing:
         raise HTTPException(status_code=400, detail="Email corporate already registered")
@@ -73,15 +70,13 @@ def create_user(db: Session, user: UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
-    # else:
-    #     raise HTTPException(status_code=403, detail="Weak password")
 
 def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         return None
     if all(value is None for value in [user_update.full_name, user_update.phone_number, user_update.role]):
-        return db_user  # Ничего не обновляем, возвращаем как есть
+        return db_user
 
     if user_update.full_name is not None:
         db_user.full_name = user_update.full_name
@@ -97,23 +92,42 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db.refresh(db_user)
     return db_user
 
-def search_users(db: Session, query: str):
+def search_users(db: Session, full_name: str = None, role: UserRole = None, sex: str = None, position_employee: str = None):
     try:
-        result = db.query(User).filter(
-            or_(
-                User.email_corporate.ilike(f"%{query}%"),
-                User.full_name.ilike(f"%{query}%"),
-                and_(User.phone_number.isnot(None), User.phone_number.ilike(f"%{query}%"))
-            )
-        ).all()
-        print(f"Search results for '{query}': {result}")
+        query = db.query(User)
+
+        # Фильтрация по full_name
+        if full_name:
+            query = query.filter(User.full_name.ilike(f"%{full_name}%"))
+
+        # Фильтрация по роли
+        if role:
+            query = query.filter(User.role == role)
+
+        # Фильтрация по полу
+        if sex:
+            if sex not in ["М", "Ж"]:
+                raise HTTPException(status_code=422, detail="Invalid sex value. Must be 'М' or 'Ж'")
+            query = query.filter(User.sex == sex)
+
+        # Фильтрация по должности
+        if position_employee:
+            query = query.filter(User.position_employee.ilike(f"%{position_employee}%"))
+
+        result = query.all()
+        print(f"Search results for filters {locals()}: {[u.full_name for u in result]}")  # Отладка
         return result
     except Exception as e:
-        print(f"Search error for '{query}': {str(e)}")
-        return []
+        print(f"Search error for filters {locals()}: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Error processing filters: {str(e)}")
+
+def get_user(db: Session, user_id: int):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
 
 def authenticate_user(db: Session, email: str, password: str):
-    """Аутентифицирует пользователя по email и паролю."""
     user = get_user_by_email(db, email)
     if not user or not user.is_active:
         return False

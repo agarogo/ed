@@ -12,20 +12,32 @@ interface UserProfileData extends User {}
 
 const UserList: React.FC<UserListProps> = ({ currentUser }) => {
     const [users, setUsers] = useState<User[]>([]);
-    const [search, setSearch] = useState("");
+    const [filters, setFilters] = useState({
+        fullName: "",
+        role: "" as UserRole | "",
+        sex: "" as "М" | "Ж" | "",
+        positionEmployee: "",
+    });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<UserProfileData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
 
-    const fetchUsers = async (query: string) => {
+    const fetchUsers = async (filterParams: Record<string, string> = {}) => {
         setLoading(true);
         setError(null);
         try {
             const token = parseCookies()._token;
-            console.log("Searching users with query:", query, "Token:", token);
-            const response = await api.get<User[]>(`/users/?q=${encodeURIComponent(query)}`, {
+            console.log("Fetching users with filters:", filterParams, "Token:", token);
+
+            const params = new URLSearchParams();
+            if (filterParams.fullName) params.append("full_name", filterParams.fullName);
+            if (filterParams.role) params.append("role", filterParams.role);
+            if (filterParams.sex) params.append("sex", filterParams.sex);
+            if (filterParams.positionEmployee) params.append("position_employee", filterParams.positionEmployee);
+
+            const response = await api.get<User[]>(`/users/?${params.toString()}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             console.log("Search results:", response.data);
@@ -39,19 +51,22 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
         }
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (search.trim()) {
-            fetchUsers(search);
-        }
+    const handleFilterChange = (key: string, value: string) => {
+        setFilters((prev) => {
+            const newFilters = { ...prev, [key]: value };
+            fetchUsers(newFilters);
+            return newFilters;
+        });
     };
 
     const fetchUserProfile = async (userId: number) => {
         try {
             const token = parseCookies()._token;
+            console.log("Fetching profile for userId:", userId, "Token:", token);
             const response = await api.get<UserProfileData>(`/users/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            console.log("Profile fetched:", response.data);
             setSelectedUser(response.data);
         } catch (err: any) {
             console.error("Failed to fetch user profile:", err.response?.data || err.message);
@@ -75,6 +90,7 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
         if (!selectedUser) return;
         try {
             const token = parseCookies()._token;
+            console.log("Saving changes for user:", selectedUser.id, "Token:", token);
             const response = await api.put(`/users/${selectedUser.id}`, updatedUser, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -87,6 +103,10 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
         }
     };
 
+    useEffect(() => {
+        fetchUsers(filters); // Загружаем пользователей при монтировании
+    }, []);
+
     return (
         <div className="min-h-screen">
             <div className="mt-24 container2 mx-auto">
@@ -96,82 +116,55 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
                         <h2 className="text-lg font-bold mb-4">Фильтры</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Имя</label>
+                                <label className="block text-sm font-medium text-gray-700">Полное имя</label>
                                 <input
                                     type="text"
+                                    value={filters.fullName}
+                                    onChange={(e) => handleFilterChange("fullName", e.target.value)}
                                     className="p-2 border rounded-lg w-full"
-                                    placeholder="Введите имя"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Фамилия</label>
-                                <input
-                                    type="text"
-                                    className="p-2 border rounded-lg w-full"
-                                    placeholder="Введите фамилию"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Отчество</label>
-                                <input
-                                    type="text"
-                                    className="p-2 border rounded-lg w-full"
-                                    placeholder="Введите отчество"
+                                    placeholder="Введите имя, фамилию или отчество"
                                 />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Роль</label>
-                                <select className="p-2 border rounded-lg w-full">
-                                    <option>Качества-то</option>
-                                    <option>Качества-то</option>
+                                <select
+                                    value={filters.role}
+                                    onChange={(e) => handleFilterChange("role", e.target.value as UserRole | "")}
+                                    className="p-2 border rounded-lg w-full"
+                                >
+                                    <option value="">Все роли</option>
+                                    <option value={UserRole.ADMIN}>Admin</option>
+                                    <option value={UserRole.MANAGER}>Manager</option>
+                                    <option value={UserRole.USER}>User</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Доступность</label>
-                                <select className="p-2 border rounded-lg w-full">
-                                    <option>Доступен</option>
-                                    <option>Недоступен</option>
+                                <label className="block text-sm font-medium text-gray-700">Пол</label>
+                                <select
+                                    value={filters.sex}
+                                    onChange={(e) => handleFilterChange("sex", e.target.value as "М" | "Ж" | "")}
+                                    className="p-2 border rounded-lg w-full"
+                                >
+                                    <option value="">Все</option>
+                                    <option value="М">Мужской</option>
+                                    <option value="Ж">Женский</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Должность</label>
+                                <input
+                                    type="text"
+                                    value={filters.positionEmployee}
+                                    onChange={(e) => handleFilterChange("positionEmployee", e.target.value)}
+                                    className="p-2 border rounded-lg w-full"
+                                    placeholder="Введите должность"
+                                />
                             </div>
                         </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
                         <div className="container mx-auto p-4">
-                            <form onSubmit={handleSearch} className="w-full max-w-md mx-auto mb-8 flex items-center">
-                                <div className="relative w-full">
-                                    <input
-                                        type="text"
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        placeholder="Поиск..."
-                                        className="p-2 border rounded-full w-full pl-10 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="h-5 w-5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                            />
-                                        </svg>
-                                    </span>
-                                </div>
-                                <button
-                                    type="submit"
-                                    className="bg-purple-500 text-white p-2 rounded-full ml-2 hover:bg-purple-600"
-                                >
-                                    Поиск
-                                </button>
-                            </form>
-
                             <div className="grid grid-cols-2 gap-6">
                                 {loading ? (
                                     <p className="text-center col-span-2">Загрузка...</p>
