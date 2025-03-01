@@ -75,29 +75,29 @@ export default function CreateNews({ currentUser }: CreateNewsProps) {
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Содержание *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Описание *</label>
                         <textarea
                             value={news.content}
                             onChange={(e) => setNews({ ...news, content: e.target.value })}
                             className="p-2 border rounded-lg w-full h-32 focus:border-purple-500"
-                            placeholder="Введите содержание новости"
+                            placeholder="Введите описание новости"
                             disabled={loading}
                             required
                         />
                     </div>
                     <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Описание (newsc)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Содержание</label>
                         <textarea
                             value={news.newsc || ""}
                             onChange={(e) => setNews({ ...news, newsc: e.target.value })}
-                            className="p-2 border rounded-lg w-full h-20 focus:border-purple-500"
-                            placeholder="Введите краткое описание новости"
+                            className="p-2 border rounded-lg w-full h-40 focus:border-purple-500"
+                            placeholder="Введите содержание новости"
                             disabled={loading}
                         />
                     </div>
                     <button
                         type="submit"
-                        className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:bg-gray-400"
+                        className="bg-[#3314F1] text-white px-4 py-2 rounded-2xl hover:bg-purple-600 disabled:bg-gray-400"
                         disabled={loading}
                     >
                         {loading ? "Создание..." : "Создать"}

@@ -210,12 +210,12 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
                                         >
                                             <div className="w-20 h-20 rounded-full fi8 flex items-center justify-center overflow-hidden"></div>
                                             <div className="flex-1">
-                                                <p className="text-purple-600 text-lg font-semibold">{user.full_name}</p>
+                                                <p className=" text-lg font-semibold">{user.full_name}</p>
                                                 <p className="text-gray-600">{user.position_employee}</p>
                                             </div>
                                             <button
                                                 onClick={() => handleViewProfile(user)}
-                                                className="bg-purple-500 text-white px-4 py-2 rounded-full hover:bg-purple-600"
+                                                className="bg-[#3314F1] text-white px-4 py-2 rounded-full hover:bg-purple-600"
                                             >
                                                 Подробнее
                                             </button>

@@ -325,7 +325,7 @@ export default function CreateEmployee({ currentUser }: CreateEmployeeProps) {
                         </div>
                         <button
                             type="submit"
-                            className="bg-purple-500 h-10 text-white mt-5 px-4 rounded-lg hover:bg-purple-600 disabled:bg-gray-400"
+                            className="bg-[#3314F1] h-10 text-white mt-5 px-4 rounded-2xl hover:bg-purple-600 disabled:bg-gray-400"
                             disabled={loading}
                         >
                             {loading ? "Создание..." : "Создать"}

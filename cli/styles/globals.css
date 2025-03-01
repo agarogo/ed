@@ -70,6 +70,26 @@ body {
   background-size: cover;
 }
 
+.fi10 {
+  background-image: url(../public/Za.png);
+  background-size: cover;
+}
+
+.fi11 {
+  background-image: url(../public/Zy.png);
+  background-size: cover;
+}
+
+.fi12 {
+  background-image: url(../public/Bl.png);
+  background-size: cover;
+}
+
+.fi13 {
+  background-image: url(../public/Sz.png);
+  background-size: cover;
+}
+
 .diagonal-gradient {
   background: linear-gradient(-45deg, #8B0C0E, #3314F1);
 }
