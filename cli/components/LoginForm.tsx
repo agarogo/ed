@@ -13,25 +13,35 @@ const LoginForm: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null); // Сбрасываем предыдущую ошибку перед новым запросом
+
         if (attempts >= 5) {
             setError("Аккаунт заблокирован из-за превышения попыток входа");
             return;
         }
 
         try {
-            console.log("Attempting login with email:", email, "and password:", password);
+            console.log("Sending login request for email:", email);
             const loginResponse = await login(email, password);
             console.log("Login successful, token:", loginResponse.access_token);
-            console.log("Redirecting to welcome via router.push");
             await router.push("/welcome");
         } catch (err: any) {
             console.error("Login error:", err);
             const newAttempts = attempts + 1;
             setAttempts(newAttempts);
-            if (err.response?.status === 403) {
-                setError(err.response.data.detail || "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа");
+
+            if (err.response) {
+                if (err.response.status === 401) {
+                    setError("Неверный email или пароль");
+                } else if (err.response.status === 403) {
+                    setError(err.response.data.detail || "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа");
+                } else {
+                    setError(err.response.data.detail || "Ошибка входа. Попробуйте позже.");
+                }
+            } else if (err.request) {
+                setError("Сервер не отвечает. Проверьте подключение.");
             } else {
-                setError(err.response?.data?.detail || "Неверный email или пароль");
+                setError("Неизвестная ошибка при входе.");
             }
         }
     };
@@ -42,7 +52,7 @@ const LoginForm: React.FC = () => {
             console.log("User is authenticated, redirecting to dashboard");
             router.push("/dashboard");
         }
-    }, []);
+    }, [router]);
 
     return (
         <div className="h-screen flex items-center justify-center relative bg-white">

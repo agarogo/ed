@@ -163,18 +163,39 @@ def authenticate_user(db: Session, email: str, password: str):
         if user.login_attempts >= 5:
             user.is_active = False
             logger.error(f"User {email} blocked due to 5 failed login attempts")
+            
+            # Уведомление для пользователя
             if not has_block_notification(db, user.id):
-                create_notification(db, user.id, "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
-                admins = db.query(User).filter(User.role == UserRole.ADMIN).all()
-                for admin in admins:
-                    if not has_block_notification(db, admin.id):
-                        create_notification(
-                            db, 
-                            admin.id, 
-                            f"Пользователь {user.email_corporate} заблокирован из-за 5 неудачных попыток входа.", 
-                            {"blocked_user_id": user.id}
-                        )
-            db.commit()
+                notification = create_notification(db, user.id, "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
+                if notification:
+                    logger.info(f"Created block notification for user {email}, notification ID: {notification.id}")
+                else:
+                    logger.warning(f"Failed to create block notification for user {email} or it already exists")
+            
+            # Уведомления для администраторов
+            admins = db.query(User).filter(User.role == UserRole.ADMIN).all()
+            logger.info(f"Found {len(admins)} admins to notify about block of {email}: {[admin.email_corporate for admin in admins]}")
+            for admin in admins:
+                if not has_block_notification(db, admin.id, email):
+                    admin_notification = create_notification(
+                        db, 
+                        admin.id, 
+                        f"Пользователь {user.email_corporate} заблокирован из-за 5 неудачных попыток входа.", 
+                        {"blocked_user_id": user.id}
+                    )
+                    if admin_notification:
+                        logger.info(f"Created block notification for admin {admin.email_corporate} about {email}, notification ID: {admin_notification.id}")
+                    else:
+                        logger.warning(f"Failed to create block notification for admin {admin.email_corporate} about {email} or it already exists")
+            
+            try:
+                db.commit()
+                logger.info(f"Successfully committed changes for blocked user {email}")
+            except Exception as e:
+                logger.error(f"Failed to commit changes for blocked user {email}: {str(e)}")
+                db.rollback()
+                raise HTTPException(status_code=500, detail="Ошибка сервера при блокировке аккаунта")
+            
             raise HTTPException(status_code=403, detail="Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
         
         db.commit()
@@ -208,19 +229,24 @@ def create_notification(db: Session, user_id: int, message: str, data: dict = No
     db.refresh(db_notification)
     return db_notification
 
-def has_block_notification(db: Session, user_id: int):
+def has_block_notification(db: Session, user_id: int, email: str = None):
+    """Проверяет, есть ли уведомление о блокировке для конкретного пользователя или администратора."""
+    if email:  # Для администраторов проверяем по email заблокированного пользователя
+        return db.query(Notification).filter(
+            Notification.user_id == user_id,
+            Notification.message == f"Пользователь {email} заблокирован из-за 5 неудачных попыток входа."
+        ).first() is not None
+    # Для пользователя проверяем общее сообщение о блокировке
     return db.query(Notification).filter(
         Notification.user_id == user_id,
-        Notification.message.like("%заблокирован из-за неудачных попыток входа%")
+        Notification.message == "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа."
     ).first() is not None
 
 def get_user_notifications(db: Session, user_id: int):
-    # Проверяем наличие столбца data в таблице
     try:
         return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
     except Exception as e:
         logger.error(f"Error fetching notifications for user {user_id}: {str(e)}")
-        # Если столбец data отсутствует, возвращаем уведомления без него
         return db.query(Notification.id, Notification.user_id, Notification.message, Notification.is_read, Notification.created_at).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
 
 def mark_notification_as_read(db: Session, notification_id: int, user_id: int):
