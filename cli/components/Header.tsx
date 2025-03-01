@@ -55,6 +55,10 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
             console.warn("Cannot logout: user not authenticated");
         }
     };
+      
+    const handleNotificationsClick = () => {
+        router.push("/notifications");
+    };
 
     const openModal = () => {
         setIsModalOpen(true);
@@ -103,6 +107,9 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
                     className="p-2 rounded text-xl ml-16"
                 >
                     Новости
+                </button>
+                <button onClick={handleNotificationsClick} className="p-2 rounded text-xl ml-16">
+                    Уведомления
                 </button>
 
                 <div className="space-x-4 ml-auto flex">

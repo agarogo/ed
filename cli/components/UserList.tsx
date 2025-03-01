@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../lib/api";
 import { User, UserRole, UserUpdate } from "../lib/types";
-import Link from "next/link";
 import { parseCookies } from "nookies";
 
 interface UserListProps {
@@ -21,6 +20,7 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<UserProfileData | null>(null);
+    const [editUserData, setEditUserData] = useState<UserUpdate>({}); // Состояние для редактируемых данных
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editMode, setEditMode] = useState(false);
 
@@ -68,6 +68,16 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
             });
             console.log("Profile fetched:", response.data);
             setSelectedUser(response.data);
+            // Инициализируем данные для редактирования
+            setEditUserData({
+                full_name: response.data.full_name,
+                phone_number: response.data.phone_number || undefined,
+                tg_name: response.data.tg_name || undefined,
+                email_user: response.data.email_user || undefined,
+                subdivision: response.data.subdivision || undefined,
+                position_employee: response.data.position_employee || undefined,
+                role: response.data.role,
+            });
         } catch (err: any) {
             console.error("Failed to fetch user profile:", err.response?.data || err.message);
             setError(err.response?.data?.detail || "Не удалось загрузить профиль пользователя");
@@ -84,27 +94,47 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
         setIsModalOpen(false);
         setSelectedUser(null);
         setEditMode(false);
+        setEditUserData({});
     };
 
-    const handleSaveChanges = async (updatedUser: UserUpdate) => {
+    const validateUserData = (data: UserUpdate): string | null => {
+        if (!data.full_name || data.full_name.trim() === "") {
+            return "Имя не может быть пустым";
+        }
+        if (data.role && !Object.values(UserRole).includes(data.role as UserRole)) {
+            return "Некорректная роль";
+        }
+        return null;
+    };
+    const handleSaveChanges = async () => {
         if (!selectedUser) return;
+    
+        const validationError = validateUserData(editUserData);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+    
         try {
             const token = parseCookies()._token;
-            console.log("Saving changes for user:", selectedUser.id, "Token:", token);
-            const response = await api.put(`/users/${selectedUser.id}`, updatedUser, {
+            console.log("Saving changes for user:", selectedUser.id, "Data:", editUserData, "Token:", token);
+            const response = await api.put(`/users/${selectedUser.id}`, editUserData, {
                 headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true, // Добавлено для передачи cookies
             });
             setSelectedUser(response.data);
             setEditMode(false);
-            console.log("User profile updated successfully");
+            setError(null);
+            console.log("User profile updated successfully:", response.data);
+            fetchUsers(filters); // Обновляем список пользователей после сохранения
         } catch (err: any) {
-            console.error("Failed to update user profile:", err.response?.data || err.message);
-            setError(err.response?.data?.detail || "Не удалось обновить профиль");
+            console.error("Failed to update user profile:", err.message, "Response:", err.response?.data);
+            setError(err.response?.data?.detail || err.message || "Не удалось обновить профиль");
         }
     };
 
     useEffect(() => {
-        fetchUsers(filters); // Загружаем пользователей при монтировании
+        fetchUsers(filters);
     }, []);
 
     return (
@@ -178,16 +208,9 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
                                             key={user.id}
                                             className="bg-white rounded-2xl shadow-md p-4 flex items-center space-x-4"
                                         >
-                                            <div className="w-20 h-20  rounded-full fi8 flex items-center justify-center overflow-hidden">
-                                                
-                                            </div>
+                                            <div className="w-20 h-20 rounded-full fi8 flex items-center justify-center overflow-hidden"></div>
                                             <div className="flex-1">
-                                                <p
-                                                    
-                                                    className="text-purple-600 text-lg font-semibold "
-                                                >
-                                                    {user.full_name}
-                                                </p>
+                                                <p className="text-purple-600 text-lg font-semibold">{user.full_name}</p>
                                                 <p className="text-gray-600">{user.position_employee}</p>
                                             </div>
                                             <button
@@ -207,185 +230,154 @@ const UserList: React.FC<UserListProps> = ({ currentUser }) => {
 
             {isModalOpen && selectedUser && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-lg">
-                        <h2 className="text-2xl font-bold mb-4">Профиль пользователя</h2>
-                        {editMode ? (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                                    <h2 className="text-3xl font-bold mb-4">Профиль</h2>
-                                    <div className="h-[40%] w-[80%] mx-auto p-10 flex">
-                                        <div className="h-[100%] w-2/3">
-                                            <div className="h-40 w-40 my-auto rounded-full fi8"></div>
-                                        </div>
-                                        <div className="h-full w-1/3 flex">
-                                            <button
-                                                onClick={() => handleSaveChanges(selectedUser)}
-                                                className="bg-green-500 mt-auto h-10 text-white px-4 py-2 rounded-full hover:bg-green-600"
-                                            >
-                                                Сохранить
-                                            </button>
-                                            <button
-                                                onClick={() => setEditMode(false)}
-                                                className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-full hover:bg-gray-600"
-                                            >
-                                                Отмена
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
-                                        <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
-                                        <div className="h-full w-1/3">
-                                            <p className="text-gray-400 text-xl">Имя:</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.full_name}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, full_name: e.target.value })
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                            
-                                            <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.phone_number || ""}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, phone_number: e.target.value})
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                            
-                                            <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.tg_name || ""}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, tg_name: e.target.value})
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                                        </div>
-                                        <div className="h-full w-1/3">
-                                            <p className="text-gray-400 text-xl">Email (личный):</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.email_user || ""}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, email_user: e.target.value || null })
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                            
-                                            <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.subdivision || ""}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, subdivision: e.target.value || null })
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                            
-                                        </div>
-                                        <div className="h-full w-1/3">
-                            
-                                            <p className="text-gray-400 text-xl">Должность:</p>
-                                            <input
-                                                type="text"
-                                                value={selectedUser.position_employee || ""}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, position_employee: e.target.value || null })
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            />
-                            
-                                            <p className="text-gray-400 text-xl mt-5">Роль:</p>
-                                            <select
-                                                value={selectedUser.role}
-                                                onChange={(e) =>
-                                                    setSelectedUser({ ...selectedUser, role: e.target.value as UserRole })
-                                                }
-                                                className="p-2 border rounded-lg w-full"
-                                            >
-                                                <option value={UserRole.ADMIN}>Admin</option>
-                                                <option value={UserRole.MANAGER}>Manager</option>
-                                                <option value={UserRole.USER}>User</option>
-                                            </select>
-                            
-                            
-                            
-                            
-                                            
-                                        </div>
-                                    </div>
-                                </div>
+                    <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                        <h2 className="text-3xl font-bold mb-4">Профиль</h2>
+                        <div className="h-[40%] w-[80%] mx-auto p-10 flex">
+                            <div className="h-[100%] w-2/3">
+                                <div className="h-40 w-40 my-auto rounded-full fi8"></div>
                             </div>
-                        ) : (
-                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                                <div className="bg-white p-20 rounded-[40] shadow-lg w-[60%] relative h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                                    <h2 className="text-3xl font-bold mb-4">Профиль</h2>
-                                    <div className="h-[40%] w-[80%] mx-auto p-10 flex">
-                                        <div className="h-[100%] w-2/3">
-                                            <div className="h-40 w-40 my-auto rounded-full fi8"></div>
-                                        </div>
-                                        <div className="h-full w-1/3 flex">
-                                            {currentUser.role === UserRole.ADMIN && (
-                                                <button
-                                                    onClick={() => setEditMode(true)}
-                                                    className="bg-purple-500 mt-auto h-10 text-white px-4 py-2 rounded-3xl hover:bg-purple-600"
-                                                >
-                                                    Редактировать
-                                                </button>
-                                            )}
+                            <div className="h-full w-1/3 flex">
+                                {editMode ? (
+                                    <>
+                                        <button
+                                            onClick={handleSaveChanges}
+                                            className="bg-green-500 mt-auto h-10 text-white px-4 py-2 rounded-full hover:bg-green-600"
+                                        >
+                                            Сохранить
+                                        </button>
+                                        <button
+                                            onClick={() => setEditMode(false)}
+                                            className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-full hover:bg-gray-600"
+                                        >
+                                            Отмена
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        {currentUser.role === UserRole.ADMIN && (
                                             <button
-                                                onClick={handleCloseModal}
-                                                className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-3xl hover:bg-gray-600"
+                                                onClick={() => setEditMode(true)}
+                                                className="bg-purple-500 mt-auto h-10 text-white px-4 py-2 rounded-3xl hover:bg-purple-600"
                                             >
-                                                Закрыть
+                                                Редактировать
                                             </button>
-                                        </div>
-                                    </div>
-                                    <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
-                                        <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
-                                        <div className="h-full w-1/3">
-                                            <p className="text-gray-400 text-xl">Имя:</p>
-                                            <p className="text-xl">{selectedUser.full_name}</p>
-
-                                            <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
-                                            <p className="text-xl">{selectedUser.phone_number || "N/A"}</p>
-
-                                            <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
-                                            <p className="text-xl">{selectedUser.tg_name || "N/A"}</p>
-                                        </div>
-                                        <div className="h-full w-1/3">
-                                            <p className="text-gray-400 text-xl">Email (личный):</p>
-                                            <p className="text-xl">{selectedUser.email_user || "N/A"}</p>
-
-                                            <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
-                                            <p className="text-xl">{selectedUser.subdivision || "N/A"}</p>
-
-                                            <p className="text-gray-400 text-xl mt-10">Пол:</p>
-                                            <p className="text-xl">{selectedUser.sex || "N/A"}</p>
-                                        </div>
-                                        <div className="h-full w-1/3">
-                                            <p className="text-gray-400 text-xl">Корп. Email:</p>
-                                            <p className="text-xl">{selectedUser.email_corporate || "N/A"}</p>
-
-                                            <p className="text-gray-400 text-xl mt-5">Должность:</p>
-                                            <p className="text-xl">{selectedUser.position_employee || "N/A"}</p>
-
-                                            <p className="text-gray-400 text-xl mt-10">Роль:</p>
-                                            <p className="text-xl">{selectedUser.role}</p>
-
-
-
-
-                                            
-                                        </div>
-                                    </div>
-                                </div>
+                                        )}
+                                        <button
+                                            onClick={handleCloseModal}
+                                            className="bg-gray-500 mt-auto ml-20 h-10 text-white px-4 py-2 rounded-3xl hover:bg-gray-600"
+                                        >
+                                            Закрыть
+                                        </button>
+                                    </>
+                                )}
                             </div>
-                        )}
+                        </div>
+                        <div className="h-[55%] w-full border-2 border-black rounded-[20] p-16 flex">
+                            <p className="text-3xl font-bold absolute mt-[-50px]">Персональная информация</p>
+                            {editMode ? (
+                                <>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Имя:</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.full_name || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, full_name: e.target.value })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                        <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.phone_number || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, phone_number: e.target.value || undefined })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                        <p className="text-gray-400 text-xl mt-5">Телеграм:</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.tg_name || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, tg_name: e.target.value || undefined })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                    </div>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Email (личный):</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.email_user || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, email_user: e.target.value || undefined })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                        <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.subdivision || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, subdivision: e.target.value || undefined })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                    </div>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Должность:</p>
+                                        <input
+                                            type="text"
+                                            value={editUserData.position_employee || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, position_employee: e.target.value || undefined })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        />
+                                        <p className="text-gray-400 text-xl mt-5">Роль:</p>
+                                        <select
+                                            value={editUserData.role || ""}
+                                            onChange={(e) =>
+                                                setEditUserData({ ...editUserData, role: e.target.value as UserRole })
+                                            }
+                                            className="p-2 border rounded-lg w-full"
+                                        >
+                                            <option value={UserRole.ADMIN}>Admin</option>
+                                            <option value={UserRole.MANAGER}>Manager</option>
+                                            <option value={UserRole.USER}>User</option>
+                                        </select>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Имя:</p>
+                                        <p className="text-xl">{selectedUser.full_name}</p>
+                                        <p className="text-gray-400 text-xl mt-5">Номер телефона:</p>
+                                        <p className="text-xl">{selectedUser.phone_number || "N/A"}</p>
+                                        <p className="text-gray-400 text-xl mt-10">Телеграм:</p>
+                                        <p className="text-xl">{selectedUser.tg_name || "N/A"}</p>
+                                    </div>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Email (личный):</p>
+                                        <p className="text-xl">{selectedUser.email_user || "N/A"}</p>
+                                        <p className="text-gray-400 text-xl mt-5">Подразделение:</p>
+                                        <p className="text-xl">{selectedUser.subdivision || "N/A"}</p>
+                                        <p className="text-gray-400 text-xl mt-10">Пол:</p>
+                                        <p className="text-xl">{selectedUser.sex || "N/A"}</p>
+                                    </div>
+                                    <div className="h-full w-1/3">
+                                        <p className="text-gray-400 text-xl">Корп. Email:</p>
+                                        <p className="text-xl">{selectedUser.email_corporate || "N/A"}</p>
+                                        <p className="text-gray-400 text-xl mt-5">Должность:</p>
+                                        <p className="text-xl">{selectedUser.position_employee || "N/A"}</p>
+                                        <p className="text-gray-400 text-xl mt-10">Роль:</p>
+                                        <p className="text-xl">{selectedUser.role}</p>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                         {error && <p className="text-red-500 mt-4">{error}</p>}
                     </div>
                 </div>

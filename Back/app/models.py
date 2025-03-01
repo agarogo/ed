@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint, Date, Enum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint, Date, Enum, JSON
 from sqlalchemy.sql import func
 from app.database import Base
 from enum import Enum as En
@@ -16,6 +16,7 @@ class Notification(Base):
     message = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    data = Column(JSON, nullable=True)  # Поле уже есть
 
     __table_args__ = (UniqueConstraint('user_id', 'message', name='uix_user_message'),)
 
@@ -26,10 +27,10 @@ class User(Base):
     full_name = Column(String, nullable=False)
     birthday = Column(Date, nullable=False)
     sex = Column(String, nullable=True)
-    email_user = Column(String, unique=True, index=True, nullable=False)
+    email_user = Column(String, unique=True, index=True, nullable=True)  # Изменено на nullable=True
     email_corporate = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False)
+    phone_number = Column(String, nullable=True)  # Изменено на nullable=True
     tg_name = Column(String, nullable=True)
     position_employee = Column(String, nullable=False)
     subdivision = Column(String, nullable=False)

@@ -8,14 +8,13 @@ from app.logging_config import logger
 from app.schemas import UserCreate, UserUpdate, NewsCreate, NewsUpdate
 from app.models import User, Notification, News, UserRole
 import os
-"""ФУНКЦИИ"""
 
 load_dotenv()
 
 SPECIAL_CHARS = '!@#$%^&*()_-+=№;%:?*'
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-"""USER"""
+# USER
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email_corporate == email).first()
 
@@ -32,7 +31,7 @@ def password_check(user: UserCreate) -> bool:
     try:
         name_parts = user.full_name.split()
         if len(name_parts) < 1:
-            return False  # Пустое имя недопустимо
+            return False
         first_name = name_parts[0]
         last_name = name_parts[1] if len(name_parts) > 1 else ""
         if first_name in password or (last_name and last_name in password):
@@ -52,8 +51,7 @@ def password_check(user: UserCreate) -> bool:
         if password in weak_passwords:
             return False
     except FileNotFoundError:
-        # Если файл не найден, можно либо вернуть False, либо пропустить эту проверку
-        pass  # Предполагаем, что отсутствие файла не блокирует создание 
+        pass
     return True
 
 def create_user(db: Session, user: UserCreate) -> User:
@@ -88,9 +86,12 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         return None
-    if all(value is None for value in [user_update.full_name, user_update.phone_number, user_update.role]):
-        return db_user  # Ничего не обновляем, возвращаем как есть
 
+    # Проверяем, есть ли хоть одно поле для обновления
+    if all(value is None for value in user_update.__dict__.values()):
+        return db_user
+
+    # Обновляем все поля из UserUpdate
     if user_update.full_name is not None:
         db_user.full_name = user_update.full_name
         create_notification(db, db_user.id, f"Ваше имя обновлено: {user_update.full_name}")
@@ -100,7 +101,25 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     if user_update.role is not None and db_user.role != "admin":
         db_user.role = user_update.role
         create_notification(db, db_user.id, f"Ваша роль обновлена: {user_update.role}")
-    
+    if user_update.subdivision is not None:
+        db_user.subdivision = user_update.subdivision
+        create_notification(db, db_user.id, f"Ваше подразделение обновлено: {user_update.subdivision}")
+    if user_update.position_employee is not None:
+        db_user.position_employee = user_update.position_employee
+        create_notification(db, db_user.id, f"Ваша должность обновлена: {user_update.position_employee}")
+    if user_update.email_user is not None:
+        db_user.email_user = user_update.email_user
+        create_notification(db, db_user.id, f"Ваш личный email обновлен: {user_update.email_user}")
+    if user_update.tg_name is not None:
+        db_user.tg_name = user_update.tg_name
+        create_notification(db, db_user.id, f"Ваш Telegram обновлен: {user_update.tg_name}")
+    if user_update.sex is not None:
+        db_user.sex = user_update.sex
+        create_notification(db, db_user.id, f"Ваш пол обновлен: {user_update.sex}")
+    if user_update.birthday is not None:
+        db_user.birthday = user_update.birthday
+        create_notification(db, db_user.id, f"Ваша дата рождения обновлена: {user_update.birthday}")
+
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -109,81 +128,111 @@ def search_users(db: Session, full_name: str = None, role: UserRole = None, sex:
     try:
         query = db.query(User)
 
-        # Фильтрация по full_name
         if full_name:
             query = query.filter(User.full_name.ilike(f"%{full_name}%"))
-
-        # Фильтрация по роли
         if role:
             query = query.filter(User.role == role)
-
-        # Фильтрация по полу
         if sex:
             if sex not in ["М", "Ж"]:
                 raise HTTPException(status_code=422, detail="Invalid sex value. Must be 'М' or 'Ж'")
             query = query.filter(User.sex == sex)
-
-        # Фильтрация по должности
         if position_employee:
             query = query.filter(User.position_employee.ilike(f"%{position_employee}%"))
 
         result = query.all()
-        print(f"Search results for filters {locals()}: {[u.full_name for u in result]}")  # Отладка
+        print(f"Search results for filters {locals()}: {[u.full_name for u in result]}")
         return result
     except Exception as e:
         print(f"Search error for filters {locals()}: {str(e)}")
         raise HTTPException(status_code=422, detail=f"Error processing filters: {str(e)}")
 
 def authenticate_user(db: Session, email: str, password: str):
-    """Аутентифицирует пользователя по email и паролю."""
     logger.info(f"Authentication attempt for email: {email}")
     user = get_user_by_email(db, email)
-    if not user or not user.is_active:
-        logger.warning(f"Authentication failed for {email}: User not found or inactive")
+    if not user:
+        logger.warning(f"Authentication failed for {email}: User not found")
         return False
+    if not user.is_active:
+        logger.warning(f"Authentication failed for {email}: User is inactive")
+        raise HTTPException(status_code=403, detail="Ваш аккаунт заблокирован. Обратитесь к администратору.")
+    
     if not pwd_context.verify(password, user.hashed_password):
         user.login_attempts += 1
         logger.warning(f"Authentication failed for {email}: Incorrect password, attempts: {user.login_attempts}")
+        
         if user.login_attempts >= 5:
             user.is_active = False
-            logger.error(f"User {email} blocked due to too many login attempts")
+            logger.error(f"User {email} blocked due to 5 failed login attempts")
             if not has_block_notification(db, user.id):
-                create_notification(db, user.id, "Ваш аккаунт заблокирован из-за неудачных попыток входа.")
-                if user.role == "admin":
-                    admins = db.query(User).filter(User.role == "admin").all()
-                    for admin in admins:
-                        if not has_block_notification(db, admin.id):
-                            create_notification(db, admin.id, f"Пользователь {user.email_corporate} заблокирован из-за неудачных попыток входа.")
+                create_notification(db, user.id, "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
+                admins = db.query(User).filter(User.role == UserRole.ADMIN).all()
+                for admin in admins:
+                    if not has_block_notification(db, admin.id):
+                        create_notification(
+                            db, 
+                            admin.id, 
+                            f"Пользователь {user.email_corporate} заблокирован из-за 5 неудачных попыток входа.", 
+                            {"blocked_user_id": user.id}
+                        )
+            db.commit()
+            raise HTTPException(status_code=403, detail="Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
+        
         db.commit()
         return False
-    user.login_attempts = 0 
+    
+    user.login_attempts = 0  # Сбрасываем счётчик при успешном входе
     db.commit()
     logger.info(f"User {email} authenticated successfully")
-    return user 
-    
+    return user
 
-"""УВЕДОМЛЕНИЯ"""
-def create_notification(db: Session, user_id: int, message: str):
+def unblock_user(db: Session, blocked_user_id: int, admin_user: User):
+    blocked_user = get_user(db, blocked_user_id)
+    if not blocked_user:
+        raise HTTPException(status_code=404, detail="Blocked user not found")
+    if admin_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only admins can unblock users")
+    blocked_user.is_active = True
+    blocked_user.login_attempts = 0
+    create_notification(db, blocked_user.id, "Ваш аккаунт разблокирован администратором.")
+    db.commit()
+    logger.info(f"User {blocked_user.email_corporate} unblocked by admin {admin_user.email_corporate}")
+    return blocked_user
+
+# NOTIFICATIONS
+def create_notification(db: Session, user_id: int, message: str, data: dict = None):
     if db.query(Notification).filter(Notification.user_id == user_id, Notification.message == message).first():
         return None
-    db_notification = Notification(user_id=user_id, message=message)
+    db_notification = Notification(user_id=user_id, message=message, data=data)
     db.add(db_notification)
     db.commit()
     db.refresh(db_notification)
     return db_notification
 
 def has_block_notification(db: Session, user_id: int):
-    """Проверяет, есть ли уже уведомление о блокировке для пользователя."""
     return db.query(Notification).filter(
         Notification.user_id == user_id,
         Notification.message.like("%заблокирован из-за неудачных попыток входа%")
     ).first() is not None
 
 def get_user_notifications(db: Session, user_id: int):
-    return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
+    # Проверяем наличие столбца data в таблице
+    try:
+        return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
+    except Exception as e:
+        logger.error(f"Error fetching notifications for user {user_id}: {str(e)}")
+        # Если столбец data отсутствует, возвращаем уведомления без него
+        return db.query(Notification.id, Notification.user_id, Notification.message, Notification.is_read, Notification.created_at).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).all()
 
+def mark_notification_as_read(db: Session, notification_id: int, user_id: int):
+    notification = db.query(Notification).filter(Notification.id == notification_id, Notification.user_id == user_id).first()
+    if not notification:
+        raise HTTPException(status_code=404, detail="Notification not found or not owned by user")
+    notification.is_read = True
+    db.commit()
+    db.refresh(notification)
+    return notification
 
-"""NEWS"""
+# NEWS
 def create_news(db: Session, news: NewsCreate, user_id: int):
     db_news = News(
         title=news.title,
