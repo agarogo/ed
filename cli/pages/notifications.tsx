@@ -23,18 +23,20 @@ export default function Notifications({ currentUser, initialNotifications }: Not
     const router = useRouter();
     const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
     const [error, setError] = useState<string | null>(null);
+    const [unblockedIds, setUnblockedIds] = useState<Set<number>>(new Set());
+    const [hiddenNotifications, setHiddenNotifications] = useState<Set<number>>(new Set()); // Новое состояние для скрытых уведомлений
 
     const fetchNotifications = async () => {
         try {
             const response = await api.get<Notification[]>("/users/me/notifications", {
-                withCredentials: true, // Добавляем для передачи cookies
+                withCredentials: true,
             });
             setNotifications(response.data);
         } catch (err: any) {
             console.error("Failed to fetch notifications:", err);
             setError(err.response?.data?.detail || "Не удалось загрузить уведомления");
             if (err.response?.status === 401) {
-                router.push("/"); // Перенаправляем на логин при 401
+                router.push("/");
             }
         }
     };
@@ -56,12 +58,23 @@ export default function Notifications({ currentUser, initialNotifications }: Not
         }
     };
 
-    const unblockUser = async (blockedUserId: number) => {
+    const hideNotification = (notificationId: number) => {
+        setHiddenNotifications((prev) => new Set(prev).add(notificationId));
+    };
+
+    const unblockUser = async (notificationId: number, blockedUserId: number) => {
         try {
             await api.post(`/users/unblock/${blockedUserId}`, null, {
                 withCredentials: true,
             });
-            fetchNotifications();
+            await api.put(`/users/notifications/${notificationId}/read`, null, {
+                withCredentials: true,
+            });
+            setUnblockedIds((prev) => new Set(prev).add(blockedUserId));
+            setNotifications((prev) =>
+                prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
+            );
+            hideNotification(notificationId); // Скрываем уведомление после разблокировки
             alert("Пользователь успешно разблокирован");
         } catch (err: any) {
             console.error("Failed to unblock user:", err);
@@ -86,38 +99,47 @@ export default function Notifications({ currentUser, initialNotifications }: Not
                 ) : (
                     <div className="space-y-4">
                         {notifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`bg-white rounded-2xl shadow-md p-4 flex items-center justify-between ${
-                                    notification.is_read ? "opacity-50" : ""
-                                }`}
-                            >
-                                <div>
-                                    <p className="text-lg font-semibold">{notification.message}</p>
-                                    <p className="text-sm text-gray-500">
-                                        {new Date(notification.created_at).toLocaleString()}
-                                    </p>
-                                </div>
-                                <div className="flex space-x-4">
-                                    {!notification.is_read && (
-                                        <button
-                                            onClick={() => markAsRead(notification.id)}
-                                            className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
-                                        >
-                                            Отметить как прочитанное
-                                        </button>
-                                    )}
-                                    {currentUser.role === UserRole.ADMIN &&
-                                        notification.data?.blocked_user_id && (
+                            !hiddenNotifications.has(notification.id) && ( // Условный рендеринг: скрываем уведомление, если его ID в hiddenNotifications
+                                <div
+                                    key={notification.id}
+                                    className={`bg-white rounded-2xl shadow-md p-4 flex items-center justify-between ${
+                                        notification.is_read ? "opacity-50" : ""
+                                    }`}
+                                >
+                                    <div>
+                                        <p className="text-lg font-semibold">{notification.message}</p>
+                                        <p className="text-sm text-gray-500">
+                                            {new Date(notification.created_at).toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="flex space-x-4">
+                                        {!notification.is_read && (
                                             <button
-                                                onClick={() => unblockUser(notification.data.blocked_user_id!)}
-                                                className="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600"
+                                                onClick={() => markAsRead(notification.id)}
+                                                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
                                             >
-                                                Разблокировать
+                                                Отметить как прочитанное
                                             </button>
                                         )}
+                                        {currentUser.role === UserRole.ADMIN &&
+                                            notification.data?.blocked_user_id && (
+                                                <button
+                                                    onClick={() => unblockUser(notification.id, notification.data.blocked_user_id!)}
+                                                    disabled={unblockedIds.has(notification.data.blocked_user_id)}
+                                                    className={`px-4 py-2 rounded-full text-white ${
+                                                        unblockedIds.has(notification.data.blocked_user_id)
+                                                            ? "bg-gray-400 cursor-not-allowed"
+                                                            : "bg-green-500 hover:bg-green-600"
+                                                    }`}
+                                                >
+                                                    {unblockedIds.has(notification.data.blocked_user_id)
+                                                        ? "Разблокировано"
+                                                        : "Разблокировать"}
+                                                </button>
+                                            )}
+                                    </div>
                                 </div>
-                            </div>
+                            )
                         ))}
                     </div>
                 )}

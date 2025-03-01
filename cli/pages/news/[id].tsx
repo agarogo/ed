@@ -16,11 +16,14 @@ export default function NewsDetail({ currentUser, news }: NewsDetailProps) {
     const [error, setError] = useState<string | null>(null);
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen ">
             <div className="mt-24 container2 mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-8">{news.title}</h1>
+                <h1 className="text-4xl font-bold mb-8">{news.title}</h1>
                 <div className="p-6 bg-white rounded-2xl shadow-md">
-                    <p className="text-lg">{news.content}</p>
+                    <p className="text-2xl">{news.content}</p>
+                </div>
+                <div className="p-6 bg-white rounded-2xl shadow-md mt-20">
+                    <p className="text-xl">{news.newsc}</p>
                     <p className="text-sm text-gray-500 mt-4">
                         Добавлено: {new Date(news.created_at).toLocaleDateString()}
                     </p>

@@ -1,9 +1,8 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.schemas import NewsCreate, NewsInDB, NewsUpdate
-from app.crud import create_news, get_news, get_news_by_id
+from app.crud import create_news, get_news, get_news_by_id, update_news, delete_news
 from app.database import get_db
 from app.dependencies import get_current_user, get_admin_user
 from app.models import News, User, UserRole
@@ -48,6 +47,8 @@ def update_news(
         db_news.title = news_update.title
     if news_update.content is not None:
         db_news.content = news_update.content
+    if news_update.newsc is not None:  # Добавлено обновление newsc
+        db_news.newsc = news_update.newsc
     if news_update.is_active is not None:
         db_news.is_active = news_update.is_active
     

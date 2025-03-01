@@ -87,11 +87,9 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate):
     if not db_user:
         return None
 
-    # Проверяем, есть ли хоть одно поле для обновления
     if all(value is None for value in user_update.__dict__.values()):
         return db_user
 
-    # Обновляем все поля из UserUpdate
     if user_update.full_name is not None:
         db_user.full_name = user_update.full_name
         create_notification(db, db_user.id, f"Ваше имя обновлено: {user_update.full_name}")
@@ -164,15 +162,10 @@ def authenticate_user(db: Session, email: str, password: str):
             user.is_active = False
             logger.error(f"User {email} blocked due to 5 failed login attempts")
             
-            # Уведомление для пользователя
             if not has_block_notification(db, user.id):
-                notification = create_notification(db, user.id, "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
-                if notification:
-                    logger.info(f"Created block notification for user {email}, notification ID: {notification.id}")
-                else:
-                    logger.warning(f"Failed to create block notification for user {email} or it already exists")
+                create_notification(db, user.id, "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа.")
+                logger.info(f"Created block notification for user {email}")
             
-            # Уведомления для администраторов
             admins = db.query(User).filter(User.role == UserRole.ADMIN).all()
             logger.info(f"Found {len(admins)} admins to notify about block of {email}: {[admin.email_corporate for admin in admins]}")
             for admin in admins:
@@ -201,10 +194,10 @@ def authenticate_user(db: Session, email: str, password: str):
         db.commit()
         return False
     
-    user.login_attempts = 0  # Сбрасываем счётчик при успешном входе
+    user.login_attempts = 0
     db.commit()
     logger.info(f"User {email} authenticated successfully")
-    return user
+    return user 
 
 def unblock_user(db: Session, blocked_user_id: int, admin_user: User):
     blocked_user = get_user(db, blocked_user_id)
@@ -230,13 +223,11 @@ def create_notification(db: Session, user_id: int, message: str, data: dict = No
     return db_notification
 
 def has_block_notification(db: Session, user_id: int, email: str = None):
-    """Проверяет, есть ли уведомление о блокировке для конкретного пользователя или администратора."""
-    if email:  # Для администраторов проверяем по email заблокированного пользователя
+    if email:
         return db.query(Notification).filter(
             Notification.user_id == user_id,
             Notification.message == f"Пользователь {email} заблокирован из-за 5 неудачных попыток входа."
         ).first() is not None
-    # Для пользователя проверяем общее сообщение о блокировке
     return db.query(Notification).filter(
         Notification.user_id == user_id,
         Notification.message == "Ваш аккаунт заблокирован из-за 5 неудачных попыток входа."
@@ -263,6 +254,7 @@ def create_news(db: Session, news: NewsCreate, user_id: int):
     db_news = News(
         title=news.title,
         content=news.content,
+        newsc=news.newsc,  # Добавлено поле newsc
         created_by=user_id,
         is_active=True
     )
@@ -285,6 +277,8 @@ def update_news(db: Session, news_id: int, news_update: NewsUpdate):
         db_news.title = news_update.title
     if news_update.content is not None:
         db_news.content = news_update.content
+    if news_update.newsc is not None:  # Добавлено обновление newsc
+        db_news.newsc = news_update.newsc
     if news_update.is_active is not None:
         db_news.is_active = news_update.is_active
     db.commit()

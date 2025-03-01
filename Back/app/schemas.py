@@ -57,6 +57,7 @@ class TwoFactorVerify(BaseModel):
 class NewsBase(BaseModel):
     title: str
     content: str
+    newsc: Optional[str] = None  # Добавлено поле newsc
 
 class NewsCreate(NewsBase):
     pass
@@ -72,7 +73,6 @@ class NewsInDB(NewsBase):
 
     class Config:
         orm_mode = True
-
 
 """КЛАССЫ TOKENA"""
 class Token(BaseModel):

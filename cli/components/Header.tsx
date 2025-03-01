@@ -109,7 +109,7 @@ const Header: React.FC<HeaderProps> = ({ currentUser }) => {
                     Новости
                 </button>
                 <button onClick={handleNotificationsClick} className="p-2 rounded text-xl ml-16">
-                    Уведомления
+                    Почта
                 </button>
 
                 <div className="space-x-4 ml-auto flex">
